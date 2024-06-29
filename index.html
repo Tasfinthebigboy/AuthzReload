@@ -1,106 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Discord Bot</title>
-    <link href="./css/bootstrap.min.css" rel="stylesheet">
-    <link href="./css/style.css" rel="stylesheet">
+    <link href="https://demo-discordbot-website-template.glitch.me/src/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://demo-discordbot-website-template.glitch.me/src/css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
     <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
-    <link rel="shortcut icon" href="img/" type="image/x-icon">
+    <link rel="shortcut icon" href="https://demo-discordbot-website-template.glitch.me/src/img/" type="image/x-icon">
+    <title>Authz Bot</title>
 </head>
+
 <body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#statistics">Statistics</a></li>
-                <li><a href="#commands">Commands</a></li>
-                <li><a href="#faq">FAQ</a></li>
-            </ul>
-            <button>Login</button>
-        </nav>
-        <div class="hero">
-            <h1>My Discord Bot</h1>
-            <p>Your ultimate Discord bot for managing servers efficiently.</p>
-            <button>Invite Bot</button>
-            <button>Support Server</button>
+
+    <!-- Navbar -->
+
+    <div class="navbar navbar-expand-md bg-dark navbar-dark">
+        <div class="container">
+            <a href="" class="navbar-brand text-info">Authz Bot</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainmenu"><span
+                    class="navbar-toggler-icon"></span></button>
+
+            <div class="collapse navbar-collapse" id="mainmenu">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item"><a href="#Features" class="nav-link">Features</a></li>
+                    <li class="nav-item"><a href="#Statics" class="nav-link">Statics</a></li>
+                    <li class="nav-item"><a href="#FAQ" class="nav-link">Ask me</a></li>
+                    <li class="nav-item"><a href="/pages/commands" class="nav-link">Commands</a></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="linksdrop" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">Links</a>
+                        <ul class="dropdown-menu bg-dark" aria-labelledby="linksdrop">
+                            <li><a class="dropdown-item text-muted" href="https://discord.com/oauth2/authorize?client_id=1254820362600845382">Invite</a></li>
+                            <li><a class="dropdown-item text-muted" href="https://github.com/Tasfinthebigboy/">Github</a></li>
+                            <li><a class="dropdown-item text-muted" href="https://discord.gg/SVcKrwAhdQ">Support Server</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
         </div>
-    </header>
-    <section id="features">
-        <h2>Features</h2>
-        <div class="feature">
-            <h3>Easy to Use</h3>
-            <p>Our bot is user-friendly and easy to set up.</p>
-        </div>
-        <div class="feature">
-            <h3>24/7 Online</h3>
-            <p>Our bot is online 24/7 to assist you.</p>
-        </div>
-        <div class="feature">
-            <h3>Open Source</h3>
-            <p>Contribute to our open-source project on GitHub.</p>
-        </div>
-    </section>
-    <section id="statistics">
-        <h2>Statistics</h2>
-        <div class="stat">
-            <h3>1000+</h3>
-            <p>Users</p>
-        </div>
-        <div class="stat">
-            <h3>500+</h3>
-            <p>Servers</p>
-        </div>
-        <div class="stat">
-            <h3>2000+</h3>
-            <p>Channels</p>
-        </div>
-    </section>
-    <section id="faq">
-        <h2>Frequently Asked Questions</h2>
-        <div class="question">
-            <h3>How do I invite the bot?</h3>
-            <p>You can invite the bot using the invite link provided above.</p>
-        </div>
-        <div class="question">
-            <h3>How do I use the bot commands?</h3>
-            <p>Check out the commands section for a list of available commands.</p>
-        </div>
-        <div class="question">
-            <h3>How can I contribute?</h3>
-            <p>Visit our GitHub repository to contribute to the project.</p>
+    </div>
+
+
+    <!-- Info -->
+
+
+    <section class="bg-dark text-light text-center py-5">
+        <div class="container">
+            <div class="d-flex">
+                <div>
+                    <h1><span class="text-info">Authz</span> Bot</h1>
+                    <p>Authz Bot is an integrated bot that moderate a server and a vericifation bot.</p>
+                    <a class="btn btn-info" href="https://discord.com/oauth2/authorize?client_id=1254820362600845382">Invite Bot</a>
+                    <a class="m-2 btn btn-light" href="https://discord.gg/SVcKrwAhdQ">Support Server</a>
+                </div>
+                <img class="img-fluid w-50" src="https://demo-discordbot-website-template.glitch.me/src/img/ArisBot.svg" alt="">
+            </div>
         </div>
     </section>
+
+
+    <!-- Features -->
+
+
+    <section  id="Features" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-4">
+                Features
+            </h2>
+            <div class="row text-center">
+                <div class="col-sm">
+                    <div class="card bg-dark text-light mb-3">
+                        <div class="h1 mt-3">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="card-body text-center">
+                            <h4 class="card-title text-info">Easy to Use</h4>
+                            <p class="card-text">Our bot is user-friendly and easy to set up.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="card bg-dark text-light mb-3">
+                        <div class="h1 mt-3">
+                            <i class="bi bi-capslock-fill"></i>
+                        </div>
+                        <div class="card-body text-center">
+                            <h4 class="card-title text-info">24/7 Online</h4>
+                            <p class="card-text">Our bot is online 24/7 to assist you.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm">
+                    <div class="card bg-dark text-light mb-3">
+                        <div class="h1 mt-3">
+                            <i class="bi bi-folder2-open"></i>
+                        </div>
+                        <div class="card-body text-center">
+                            <h4 class="card-title text-info">Open Source</h4>
+                            <p class="card-text">Contribute to our open-source project on GitHub.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Statics -->
+
+
+    <section id="Statics" class="py-5 bg-dark text-light">
+        <div class="container">
+            <div class="py-2 text-center">
+                <h2>Statics:</h2>
+            </div>
+            <div class="row align-items-center justify-content-center text-center -5">
+                <div class="col">
+                    <img src="https://demo-discordbot-website-template.glitch.me/src/img/statics.svg" alt="" class="img-fluid d-none d-md-block">
+                </div>
+                <div class="col-sm p-5 h1">
+                    <i class="bi bi-hdd-stack text-primary"></i>
+                    <h5>2</h5>
+                    <h5>Server</h5>
+                </div>
+                <div class="col-sm p-5 h1">
+                    <i class="bi bi bi-people-fill text-primary"></i>
+                    <h5>112+</h5>
+                    <h5>Users</h5>
+                </div>
+                <div class="col-sm p-5 h1">
+                    <i class="bi bi bi-hash text-primary"></i>
+                    <h5>37+</h5>
+                    <h5>Channels</h5>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <!-- FAQ -->
+
+    <section id="FAQ" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-3">
+                Frequently Asked Qusetions
+            </h2>
+            <div class="accordion accordion-flush" id="your-faq">
+                <div class="accordion-item">
+                    <h5 class="accordion-header" id="qusetion-1">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#answer-1">
+                            Question One
+                        </button>
+                    </h5>
+                    <div class="accordion-collapse collapse p-3" id="answer-1" data-bs-parent="#your-faq">
+                        Lorem ipsum dolor, sit amet consectetur adipisicing elit. Quae libero cumque, obcaecati soluta voluptatibus in!
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h5 class="accordion-header" id="qusetion-2">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#answer-2">
+                            Question Two
+                        </button>
+                    </h5>
+                    <div class="accordion-collapse collapse p-3" id="answer-2" data-bs-parent="#your-faq">
+                        Lorem ipsum dolor, sit amet consectetur adipisicing elit. Quae libero cumque, obcaecati soluta voluptatibus in!
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h5 class="accordion-header" id="qusetion-3">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#answer-3">
+                            Question Three
+                        </button>
+                    </h5>
+                    <div class="accordion-collapse collapse p-3" id="answer-3" data-bs-parent="#your-faq">
+                        Lorem ipsum dolor, sit amet consectetur adipisicing elit. Quae libero cumque, obcaecati soluta voluptatibus in!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- footer -->
+
+    <div class="footer-clean bg-dark">
     <footer>
-        <div class="quick-access">
-            <h4>Quick Access</h4>
-            <ul>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#statistics">Statistics</a></li>
-                <li><a href="#commands">Commands</a></li>
-                <li><a href="#faq">FAQ</a></li>
-            </ul>
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-sm-4 col-md-3 item">
+                    <h3>About</h3>
+                    <ul>
+                        <li><a href="/pages/commands">Commands</a></li>
+                        <li><a href="/pages/license">License</a></li>
+                    </ul>
+                </div>
+                <div class="col-sm-4 col-md-3 item">
+                    <h3>Links</h3>
+                    <ul>
+                        <li><a href="https://discord.gg/SVcKrwAhdQ">Support server</a></li>
+                        <li><a href="https://discord.com/oauth2/authorize?client_id=1254820362600845382">Invite bot</a></li>
+                        <li><a href="https://github.com/Tasfinthebigboy/">Github</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 item social"><a href="#"><ion-icon name="logo-discord"></ion-icon></a><a href="#"><ion-icon name="logo-facebook"></ion-icon></a><a href="#"><ion-icon name="logo-twitter"></ion-icon></a><a href="#"><ion-icon name="logo-instagram"></ion-icon></a>
+                    <p class="copyright">Authz Bot © 2024</p>
+                </div>
+            </div>
         </div>
-        <div class="about">
-            <h4>About</h4>
-            <ul>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#statistics">Statistics</a></li>
-                <li><a href="#commands">Commands</a></li>
-                <li><a href="#faq">FAQ</a></li>
-            </ul>
+        <div class="page-footer font-small text-light mt-5">
+        <div class="footer-copyright text-center">Made with 💖 by
+            <a href="https://github.com/Tasfinthebigboy/">Tasfinthebigboy</a>
+            © 2024 Copyright
+          </div>
         </div>
-        <div class="links">
-            <h4>Links</h4>
-            <ul>
-                <li><a href="https://github.com/your-repo">GitHub</a></li>
-                <li><a href="https://support.server">Support Server</a></li>
-            </ul>
-        </div>
-        <p>Made with ❤️ by Tasfinthebigboy © 2024</p>
     </footer>
+</div>
+
+    <script src="https://demo-discordbot-website-template.glitch.me/src/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 </body>
+
 </html>
