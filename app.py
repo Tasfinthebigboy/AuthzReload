@@ -109,6 +109,14 @@ async def verify(interaction: discord.Interaction, role: discord.Role):
 @discord.app_commands.default_permissions(kick_members=True)
 @discord.app_commands.describe(member="Member to kick", reason="Reason for the kick")
 async def kick(interaction: discord.Interaction, member: discord.Member, reason: str = None):
+    if member == interaction.user:
+        await interaction.response.send_message("You can't kick yourself :no_entry:", ephemeral=True)
+        return
+
+    if member.top_role >= interaction.user.top_role:
+        await interaction.response.send_message(f"You can't do that to the user :no_entry:", ephemeral=True)
+        return
+
     await member.kick(reason=reason)
     await interaction.response.send_message(f'User {member} has been kicked for reason: {reason}')
 
@@ -117,8 +125,17 @@ async def kick(interaction: discord.Interaction, member: discord.Member, reason:
 @discord.app_commands.default_permissions(ban_members=True)
 @discord.app_commands.describe(member="Member to ban", reason="Reason for the ban")
 async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = None):
+    if member == interaction.user:
+        await interaction.response.send_message("You can't ban yourself :no_entry:", ephemeral=True)
+        return
+
+    if member.top_role >= interaction.user.top_role:
+        await interaction.response.send_message(f"You can't do that to the user :no_entry:", ephemeral=True)
+        return
+
     await member.ban(reason=reason)
     await interaction.response.send_message(f'User {member} has been banned for reason: {reason}')
+
 
 # Slash command for unban
 @bot.tree.command(name="unban", description="Unbans a user from the server")
@@ -139,6 +156,14 @@ async def unban(interaction: discord.Interaction, user: discord.User):
 @discord.app_commands.default_permissions(manage_roles=True)
 @discord.app_commands.describe(member="Member to mute", reason="Reason for the mute")
 async def mute(interaction: discord.Interaction, member: discord.Member, reason: str = None):
+    if member == interaction.user:
+        await interaction.response.send_message("You can't mute yourself :no_entry:", ephemeral=True)
+        return
+
+    if member.top_role >= interaction.user.top_role:
+        await interaction.response.send_message(f"You can't do that to the user :no_entry:", ephemeral=True)
+        return
+
     mute_role = discord.utils.get(interaction.guild.roles, name='Muted')
     if not mute_role:
         mute_role = await interaction.guild.create_role(name='Muted')
@@ -147,19 +172,41 @@ async def mute(interaction: discord.Interaction, member: discord.Member, reason:
             await channel.set_permissions(mute_role, speak=False, send_messages=False, read_message_history=True, read_messages=True)
 
     await member.add_roles(mute_role, reason=reason)
-    await interaction.response.send_message(f'User {member} has been muted for reason: {reason}')
+
+    embed = discord.Embed(
+        title="User Muted",
+        description=f"{member} has been muted.",
+        color=0xff0000
+    )
+    embed.add_field(name="Reason", value=reason if reason else "No reason provided", inline=False)
+    embed.set_footer(text=f"Muted by {interaction.user}", icon_url=interaction.user.avatar.url)
+
+    await interaction.response.send_message(embed=embed)
 
 # Slash command for unmute
 @bot.tree.command(name="unmute", description="Unmutes a user in the server")
 @discord.app_commands.default_permissions(manage_roles=True)
 @discord.app_commands.describe(member="Member to unmute")
 async def unmute(interaction: discord.Interaction, member: discord.Member):
+    if member == interaction.user:
+        await interaction.response.send_message("You can't unmute yourself :no_entry:", ephemeral=True)
+        return
+
     mute_role = discord.utils.get(interaction.guild.roles, name='Muted')
-    if mute_role in member.roles:
-        await member.remove_roles(mute_role)
-        await interaction.response.send_message(f'User {member} has been unmuted.')
-    else:
-        await interaction.response.send_message(f'User {member} is not muted.')
+    if not mute_role or mute_role not in member.roles:
+        await interaction.response.send_message(f"{member} is not muted or the mute role doesn't exist.", ephemeral=True)
+        return
+
+    await member.remove_roles(mute_role)
+
+    embed = discord.Embed(
+        title="User Unmuted",
+        description=f"{member} has been unmuted.",
+        color=0x00ff00
+    )
+    embed.set_footer(text=f"Unmuted by {interaction.user}", icon_url=interaction.user.avatar.url)
+
+    await interaction.response.send_message(embed=embed)
 
 # Slash command for warn
 @bot.tree.command(name="warn", description="Warns a user in the server")
@@ -245,6 +292,33 @@ async def help_command(interaction: discord.Interaction):
 async def customembed(interaction: discord.Interaction, title: str, description: str):
     embed = discord.Embed(title=title, description=description, color=0xe33235)
     await interaction.response.send_message(embed=embed)
+
+# Slash command for purge/clear
+@bot.tree.command(name="purge", description="Deletes a specified number of messages from the channel")
+@discord.app_commands.default_permissions(manage_messages=True)
+@discord.app_commands.describe(amount="Number of messages to delete")
+async def purge(interaction: discord.Interaction, amount: int):
+    if amount <= 0:
+        await interaction.response.send_message("Please specify a positive number of messages to delete.", ephemeral=True)
+        return
+
+    deleted = await interaction.channel.purge(limit=amount)
+
+    embed = discord.Embed(
+        title="Messages Purged",
+        description=f"Deleted {len(deleted)} messages from {interaction.channel.mention}",
+        color=0xff0000
+    )
+    embed.set_footer(text=f"Requested by {interaction.user}", icon_url=interaction.user.avatar.url)
+
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# Alias for purge command
+@bot.tree.command(name="clear", description="Alias for the purge command")
+@discord.app_commands.default_permissions(manage_messages=True)
+@discord.app_commands.describe(amount="Number of messages to delete")
+async def clear(interaction: discord.Interaction, amount: int):
+    await purge(interaction, amount)
 
 # Run the bot
 if __name__ == "__main__":
