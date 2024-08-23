@@ -9,8 +9,8 @@ import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
 intents = discord.Intents.default()
-# intents.members = True  # Enable guild members intent
-# intents.messages = True  # Enable message content intent # i don't intents i guess
+intents.members = True  # Enable guild members intent
+intents.message_content = True  # Enable message content intent # i don't intents i guess
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 warnings = {}
@@ -71,36 +71,49 @@ async def setup_automod_command(interaction: discord.Interaction, channel: disco
             headers=headers,
             json=auto_mod_rule
         ) as resp:
-            if resp.status == 201:
+            if resp.status == 201 or 200 or 204:
                 await interaction.response.send_message(f"Automod rule created for {interaction.guild.name} in {channel.mention}")
             else:
                 error_text = await resp.text()
                 await interaction.response.send_message(f"Error creating automod rule: {resp.status} - {error_text}", ephemeral=True)
 
-# Slash command for verification
-@bot.tree.command(name="verify", description="Sets up a verification system")
-@discord.app_commands.default_permissions(administrator=True)
-@discord.app_commands.describe(role="Role to assign upon verification")
-async def verify(interaction: discord.Interaction, role: discord.Role):
-    embed = discord.Embed(
-        title="Verification",
-        description="Click the button below to verify yourself and gain access to the server.",
-        color=0x00ff00
-    )
+@bot.command(name="globalinfo", help="Displays global information including total member count, channel count, and server count across all servers.")
+async def globalinfo(ctx):
+    total_members = sum(guild.member_count for guild in bot.guilds)
+    total_channels = sum(len(guild.channels) for guild in bot.guilds)
+    total_servers = len(bot.guilds)
 
-    class VerifyButton(discord.ui.Button):
-        def __init__(self):
-            super().__init__(label='Verify', style=discord.ButtonStyle.green)
+    embed = discord.Embed(title="Global Bot Information", color=0x00ff00)
+    embed.add_field(name="Total Member Count", value=total_members, inline=False)
+    embed.add_field(name="Total Channel Count", value=total_channels, inline=False)
+    embed.add_field(name="Total Server Count", value=total_servers, inline=False)
 
-        async def callback(self, interaction: discord.Interaction):
-            if role not in interaction.user.roles:
-                await interaction.user.add_roles(role)
-                await interaction.response.send_message('You have been verified!', ephemeral=True)
-            else:
-                await interaction.response.send_message('You are already verified.', ephemeral=True)
+    await ctx.send(embed=embed)
+                
+@bot.tree.command(name="verify", description="Sets up a verification system")  
+@discord.app_commands.default_permissions(administrator=True)  
+@discord.app_commands.describe(role="Role to assign upon verification")  
+async def verify(interaction: discord.Interaction, role: discord.Role):  
+    embed = discord.Embed(  
+        title="Verification",  
+        description="Click the button below to verify yourself and gain access to the server.",  
+        color=0x00ff00  
+    )  
 
-    view = discord.ui.View()
-    view.add_item(VerifyButton())
+    class VerifyButton(discord.ui.Button):  
+        def __init__(self, role):  
+            super().__init__(label='Verify', style=discord.ButtonStyle.green)  
+            self.role = role  
+
+        async def callback(self, interaction: discord.Interaction):  
+            if self.role not in interaction.user.roles:  
+                await interaction.user.add_roles(self.role)  
+                await interaction.response.send_message('You have been verified!', ephemeral=True)  
+            else:  
+                await interaction.response.send_message('You are already verified.', ephemeral=True)  
+
+    view = discord.ui.View()  
+    view.add_item(VerifyButton(role))  
 
     await interaction.response.send_message(embed=embed, view=view)
 
@@ -303,15 +316,7 @@ async def purge(interaction: discord.Interaction, amount: int):
         return
 
     deleted = await interaction.channel.purge(limit=amount)
-
-    embed = discord.Embed(
-        title="Messages Purged",
-        description=f"Deleted {len(deleted)} messages from {interaction.channel.mention}",
-        color=0xff0000
-    )
-    embed.set_footer(text=f"Requested by {interaction.user}", icon_url=interaction.user.avatar.url)
-
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message(f"Deleted {len(deleted)} messages.", ephemeral=True)
 
 # Alias for purge command
 @bot.tree.command(name="clear", description="Alias for the purge command")
