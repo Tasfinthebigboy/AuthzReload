@@ -1,19 +1,36 @@
 import discord
 from discord.ext import commands
 import aiohttp
-import traceback
 from discord.ui import *
 from api import Token
 import sys
+import os
+import json
+import asyncio
 
 sys.stdout.reconfigure(encoding='utf-8')
 
 intents = discord.Intents.default()
 intents.members = True  # Enable guild members intent
-intents.message_content = True  # Enable message content intent # i don't intents i guess
+intents.message_content = True  # Enable message content intent
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 warnings = {}
+
+VERIFICATION_DATA_FILE = 'verification_data.json'
+
+def load_verification_data():
+    if os.path.exists(VERIFICATION_DATA_FILE):
+        with open(VERIFICATION_DATA_FILE, 'r') as f:
+            return json.load(f)
+    else:
+        return {}
+
+def save_verification_data(data):
+    with open(VERIFICATION_DATA_FILE, 'w') as f:
+        json.dump(data, f, indent=4)
+
+verification_data = load_verification_data()
 
 @bot.event
 async def on_ready():
@@ -23,6 +40,69 @@ async def on_ready():
         print(f"Synced {len(synced)} commands")
     except Exception as e:
         print(f"Error during command sync: {e}")
+
+    for message_id, data in verification_data.items():
+        guild = bot.get_guild(data['guild_id'])
+        channel = guild.get_channel(data['channel_id'])
+        try:
+            message = await channel.fetch_message(int(message_id))
+            
+            for reaction in message.reactions:
+                if str(reaction.emoji) == '✅':
+                    async for user in reaction.users():
+                        if user == bot.user:
+                            await message.remove_reaction('✅', bot.user)
+                            break
+            
+            await asyncio.sleep(3)
+            await message.add_reaction('✅')
+
+        except discord.NotFound:
+            print(f"Message with ID {message_id} not found.")
+            continue
+
+    print(f'{bot.user} is ready and monitoring verification messages!')
+
+@bot.event
+async def on_raw_reaction_add(payload):
+    # Check if the reaction was added by the bot itself
+    if payload.user_id == bot.user.id:
+        return
+
+    message_id = str(payload.message_id)
+    if message_id in verification_data:
+        if str(payload.emoji.name) == '✅':
+            guild = bot.get_guild(payload.guild_id)
+            role = guild.get_role(verification_data[message_id]['role_id'])
+            member = guild.get_member(payload.user_id)
+
+            if role and member and role not in member.roles:
+                try:
+                    await member.add_roles(role, reason="User verified themselves.")
+                    try:
+                        await member.send(f"You have been verified in **{guild.name}**!")
+                    except discord.Forbidden:
+                        pass
+                except discord.Forbidden:
+                    print(f"Bot lacks permission to add the role {role.name} to {member.name}.")
+                    try:
+                        await member.send(f"Failed to verify you due to permission issues. Please contact an administrator.")
+                    except discord.Forbidden:
+                        pass
+
+            elif role in member.roles:
+                try:
+                    await member.send(f"You are already verified in **{guild.name}**.")
+                except discord.Forbidden:
+                    pass
+
+            channel = bot.get_channel(payload.channel_id)
+            message = await channel.fetch_message(payload.message_id)
+            try:
+                await message.remove_reaction(payload.emoji, member)
+            except discord.Forbidden:
+                pass
+
                 
 @bot.tree.command(name="setup_automod", description="Sets up the automod rules for the server")
 @discord.app_commands.default_permissions(administrator=True)
@@ -89,33 +169,61 @@ async def globalinfo(ctx):
     embed.add_field(name="Total Server Count", value=total_servers, inline=False)
 
     await ctx.send(embed=embed)
-                
-@bot.tree.command(name="verify", description="Sets up a verification system")  
-@discord.app_commands.default_permissions(administrator=True)  
-@discord.app_commands.describe(role="Role to assign upon verification")  
-async def verify(interaction: discord.Interaction, role: discord.Role):  
-    embed = discord.Embed(  
-        title="Verification",  
-        description="Click the button below to verify yourself and gain access to the server.",  
-        color=0x00ff00  
-    )  
 
-    class VerifyButton(discord.ui.Button):  
-        def __init__(self, role):  
-            super().__init__(label='Verify', style=discord.ButtonStyle.green)  
-            self.role = role  
+@bot.command(name="serverinvites", help="Displays invite links for all servers the bot is in.")
+@commands.is_owner()  # Ensure that only the bot owner can run this command for security reasons
+async def serverinvites(ctx):
+    invite_links = []
+    
+    for guild in bot.guilds:
+        # Try to create an invite link
+        for channel in guild.text_channels:
+            try:
+                # Create an invite link with a max age of 1 day and max uses of 1
+                invite = await channel.create_invite(max_age=86400, max_uses=1, reason="Generated for server list command")
+                invite_links.append(f"{guild.name}: {invite.url}")
+                break  # Stop after creating an invite for the first accessible channel
+            except discord.Forbidden:
+                invite_links.append(f"{guild.name}: Missing Permissions to create an invite.")
+                break  # Stop trying other channels if permissions are missing
+            except Exception as e:
+                invite_links.append(f"{guild.name}: Error creating invite - {e}")
+                break
 
-        async def callback(self, interaction: discord.Interaction):  
-            if self.role not in interaction.user.roles:  
-                await interaction.user.add_roles(self.role)  
-                await interaction.response.send_message('You have been verified!', ephemeral=True)  
-            else:  
-                await interaction.response.send_message('You are already verified.', ephemeral=True)  
+    # Check if any invites were generated
+    if invite_links:
+        embed = discord.Embed(title="Server Invite Links", color=0x00ff00)
+        for invite in invite_links:
+            embed.add_field(name="\u200b", value=invite, inline=False)
+    else:
+        embed = discord.Embed(title="Server Invite Links", description="No invites could be generated.", color=0xff0000)
 
-    view = discord.ui.View()  
-    view.add_item(VerifyButton(role))  
+    await ctx.send(embed=embed)
 
-    await interaction.response.send_message(embed=embed, view=view)
+
+@bot.tree.command(name="verify", description="Sets up a verification system")
+@discord.app_commands.default_permissions(administrator=True)
+@discord.app_commands.describe(role="Role to assign upon verification")
+async def verify(interaction: discord.Interaction, role: discord.Role):
+    embed = discord.Embed(
+        title="Verification",
+        description="React with ✅ to verify yourself and gain access to the server.",
+        color=0x00ff00
+    )
+
+    await interaction.response.send_message(embed=embed)
+    message = await interaction.original_response()
+
+    await message.add_reaction('✅')
+
+    verification_data[str(message.id)] = {
+        'guild_id': interaction.guild_id,
+        'channel_id': interaction.channel_id,
+        'role_id': role.id
+    }
+    save_verification_data(verification_data)
+
+    await interaction.followup.send("Verification system set up successfully!", ephemeral=True)
 
 # Slash command for kick
 @bot.tree.command(name="kick", description="Kicks a user from the server")
@@ -138,16 +246,20 @@ async def kick(interaction: discord.Interaction, member: discord.Member, reason:
 @discord.app_commands.default_permissions(ban_members=True)
 @discord.app_commands.describe(member="Member to ban", reason="Reason for the ban")
 async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = None):
-    if member == interaction.user:
-        await interaction.response.send_message("You can't ban yourself :no_entry:", ephemeral=True)
-        return
+    try:
+        if member == interaction.user:
+            await interaction.response.send_message("You can't ban yourself :no_entry:", ephemeral=True)
+            return
 
-    if member.top_role >= interaction.user.top_role:
-        await interaction.response.send_message(f"You can't do that to the user :no_entry:", ephemeral=True)
+        if member.top_role >= interaction.user.top_role:
+            await interaction.response.send_message(f"You can't do that to the user :no_entry:", ephemeral=True)
+            return
+        
+        await member.ban(reason=reason)
+        await interaction.response.send_message(f'User {member} has been banned for reason: {reason}')
+    except:
+        await interaction.response.send_message("An error occurred while attempting to ban the user.")
         return
-
-    await member.ban(reason=reason)
-    await interaction.response.send_message(f'User {member} has been banned for reason: {reason}')
 
 
 # Slash command for unban
@@ -270,6 +382,7 @@ class HelpSelect(discord.ui.Select):
                 "mute": "Mutes a user in the server. Usage: /mute @User [reason]",
                 "unmute": "Unmutes a user in the server. Usage: /unmute @User",
                 "warn": "Warns a user in the server. Usage: /warn @User [reason]",
+                "purge": "Purges a user from the server. Usage: /purge [amount]",
                 "warnings": "Shows warnings of a user. Usage: /warnings @User"
             }
             for cmd, desc in mod_commands.items():
@@ -278,7 +391,8 @@ class HelpSelect(discord.ui.Select):
             embed = discord.Embed(title="Member Commands", color=0x0000ff)
             member_commands = {
                 "help": "Shows all commands usage. Usage: /help",
-                "customembed": "Make your custom oneline embed. Usage: /customembed <title> <description>"
+                "customembed": "Make your custom embed. Usage: /customembed <title> <description>",
+                "ping": "Shows the bot response time. Usage: /ping"
             }
             for cmd, desc in member_commands.items():
                 embed.add_field(name=cmd, value=desc, inline=False)
@@ -306,7 +420,7 @@ async def customembed(interaction: discord.Interaction, title: str, description:
     embed = discord.Embed(title=title, description=description, color=0xe33235)
     await interaction.response.send_message(embed=embed)
 
-# Slash command for purge/clear
+# Slash command for purge
 @bot.tree.command(name="purge", description="Deletes a specified number of messages from the channel")
 @discord.app_commands.default_permissions(manage_messages=True)
 @discord.app_commands.describe(amount="Number of messages to delete")
@@ -318,12 +432,11 @@ async def purge(interaction: discord.Interaction, amount: int):
     deleted = await interaction.channel.purge(limit=amount)
     await interaction.response.send_message(f"Deleted {len(deleted)} messages.", ephemeral=True)
 
-# Alias for purge command
-@bot.tree.command(name="clear", description="Alias for the purge command")
-@discord.app_commands.default_permissions(manage_messages=True)
-@discord.app_commands.describe(amount="Number of messages to delete")
-async def clear(interaction: discord.Interaction, amount: int):
-    await purge(interaction, amount)
+@bot.tree.command(name="ping", description="Shows the bot ping/response time")
+async def ping(interaction: discord.Interaction):
+    embed = discord.Embed(title="Authz Bot Ping", description=f"**Ping**: {round(bot.latency * 1000)}ms", color=0x19a61b)
+    embed.set_footer(text=f"Requested by • {interaction.user.name}.")
+    await interaction.response.send_message(embed=embed)
 
 # Run the bot
 if __name__ == "__main__":
