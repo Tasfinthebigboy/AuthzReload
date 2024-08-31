@@ -115,33 +115,54 @@ async def on_raw_reaction_add(payload):
 @bot.tree.command(name="setup_automod", description="Sets up the automod rules for the server")
 @discord.app_commands.default_permissions(administrator=True)
 @discord.app_commands.describe(channel="Channel to send alert messages to")
-async def setup_automod_command(interaction: discord.Interaction, channel: discord.TextChannel):
+@discord.app_commands.describe(badword="Word that will be blocked")
+async def setup_automod_command(interaction: discord.Interaction, channel: discord.TextChannel, badword: str = None):
     headers = {
         "Authorization": f"Bot {bot.http.token}",
         "Content-Type": "application/json"
     }
-
-    auto_mod_rule = {
-        "name": "Prohibit offensive language",
-        "event_type": 1,  
-        "trigger_type": 1,  
-        "trigger_metadata": {
-            "keyword_filter": ["bad word 1", "bad word 2"]
-        },
-        "actions": [
-            {
-                "type": 1,  
+    if badword is not None:
+        auto_mod_rule = {
+            "name": "Prohibit offensive language",
+            "event_type": 1,  
+            "trigger_type": 1,  
+            "trigger_metadata": {
+                "keyword_filter": [f"{badword}"],
             },
-            {
-                "type": 2,  
-                "metadata": {
-                    "channel_id": channel.id
+            "actions": [
+                {
+                    "type": 1,  
+                },
+                {
+                    "type": 2,  
+                    "metadata": {
+                        "channel_id": channel.id
+                    }
                 }
-            }
-        ],
-        "enabled": True  
-    }
-
+            ],
+            "enabled": True  
+        }
+    else:
+        auto_mod_rule = {
+            "name": "Prohibit offensive language",
+            "event_type": 1,  
+            "trigger_type": 1,  
+            "trigger_metadata": {
+                "keyword_filter": [f"Fuck", "Bitch"],
+            },
+            "actions": [
+                {
+                    "type": 1,  
+                },
+                {
+                    "type": 2,  
+                    "metadata": {
+                        "channel_id": channel.id
+                    }
+                }
+            ],
+            "enabled": True  
+        }
     async with aiohttp.ClientSession() as session:
         async with session.get(
             f"https://discord.com/api/v10/guilds/{interaction.guild.id}/auto-moderation/rules",
@@ -165,19 +186,18 @@ async def setup_automod_command(interaction: discord.Interaction, channel: disco
                 error_text = await resp.text()
                 await interaction.response.send_message(f"Error creating automod rule: {resp.status} - {error_text}", ephemeral=True)
 
-# @bot.command(name="globalinfo", help="Displays global information including total member count, channel count, and server count across all servers.")
-# async def globalinfo(ctx):
-#     total_members = sum(guild.member_count for guild in bot.guilds)
-#     total_channels = sum(len(guild.channels) for guild in bot.guilds)
-#     total_servers = len(bot.guilds)
-# 
-#     embed = discord.Embed(title="Global Bot Information", color=0x00ff00)
-#     embed.add_field(name="Total Member Count", value=total_members, inline=False)
-#     embed.add_field(name="Total Channel Count", value=total_channels, inline=False)
-#     embed.add_field(name="Total Server Count", value=total_servers, inline=False)
-#
-#     await ctx.send(embed=embed)
+@bot.command(name="globalinfo", help="Displays global information including total member count, channel count, and server count across all servers.")
+async def globalinfo(ctx):
+    total_members = sum(guild.member_count for guild in bot.guilds)
+    total_channels = sum(len(guild.channels) for guild in bot.guilds)
+    total_servers = len(bot.guilds)
 
+    embed = discord.Embed(title="Global Bot Information", color=0x00ff00)
+    embed.add_field(name="Total Member Count", value=total_members, inline=False)
+    embed.add_field(name="Total Channel Count", value=total_channels, inline=False)
+    embed.add_field(name="Total Server Count", value=total_servers, inline=False)
+
+    await ctx.send(embed=embed)
 
 @bot.tree.command(name="verify", description="Sets up a verification system")
 @discord.app_commands.default_permissions(administrator=True)
@@ -390,9 +410,61 @@ async def help_command(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed, view=HelpView())
 
 @bot.tree.command(name="customembed", description="Create a custom embed")
-@discord.app_commands.describe(title="Title of the embed", description="Description of the embed")
-async def customembed(interaction: discord.Interaction, title: str, description: str):
-    embed = discord.Embed(title=title, description=description, color=0xe33235)
+@discord.app_commands.describe(
+    title="Title of the embed",
+    description="Description of the embed",
+    color="Color of the embed (in hex, e.g., #e33235)",
+    url="URL to hyperlink the title",
+    thumbnail_url="URL of the thumbnail image",
+    image_url="URL of the main image",
+    footer_text="Text for the footer",
+    footer_icon_url="URL of the footer icon",
+    author_name="Name of the author",
+    author_url="URL of the author",
+    author_icon_url="URL of the author icon"
+)
+async def customembed(
+    interaction: discord.Interaction,
+    title: str,
+    description: str,
+    color: str = None,
+    url: str = None,
+    thumbnail_url: str = None,
+    image_url: str = None,
+    footer_text: str = None,
+    footer_icon_url: str = None,
+    author_name: str = None,
+    author_url: str = None,
+    author_icon_url: str = None
+):
+    # Create an embed with required title and description
+    embed = discord.Embed(title=title, description=description)
+
+    # Set color if provided
+    if color:
+        embed.color = discord.Color(int(color.strip("#"), 16))
+
+    # Set URL for the title if provided
+    if url:
+        embed.url = url
+
+    # Set thumbnail if provided
+    if thumbnail_url:
+        embed.set_thumbnail(url=thumbnail_url)
+
+    # Set image if provided
+    if image_url:
+        embed.set_image(url=image_url)
+
+    # Set footer if provided
+    if footer_text or footer_icon_url:
+        embed.set_footer(text=footer_text, icon_url=footer_icon_url)
+
+    # Set author if provided
+    if author_name or author_icon_url or author_url:
+        embed.set_author(name=author_name, url=author_url, icon_url=author_icon_url)
+
+    # Send the embed as a response
     await interaction.response.send_message(embed=embed)
 
 @bot.tree.command(name="purge", description="Deletes a specified number of messages from the channel")
@@ -413,6 +485,7 @@ async def ping(interaction: discord.Interaction):
     embed.set_footer(text=f"Requested by • {interaction.user.name}.")
     await interaction.response.send_message(embed=embed)
     
+# Functions for join.db
 async def get_welcome_channel(guild_id):
     async with aiosqlite.connect("join.db") as db:
         async with db.execute("SELECT welcome_channel_id FROM guild_settings WHERE guild_id = ?", (guild_id,)) as cursor:
@@ -424,6 +497,7 @@ async def set_welcome_channel(guild_id, channel_id):
         await db.execute("INSERT OR REPLACE INTO guild_settings (guild_id, welcome_channel_id) VALUES (?, ?)", (guild_id, channel_id))
         await db.commit()
 
+# Functions for leave.db
 async def get_leave_channel(guild_id):
     async with aiosqlite.connect("leave.db") as db:
         async with db.execute("SELECT leave_channel_id FROM guild_settings WHERE guild_id = ?", (guild_id,)) as cursor:
@@ -435,6 +509,7 @@ async def set_leave_channel(guild_id, channel_id):
         await db.execute("INSERT OR REPLACE INTO guild_settings (guild_id, leave_channel_id) VALUES (?, ?)", (guild_id, channel_id))
         await db.commit()
 
+# Functions for autorole.db
 async def get_auto_role(guild_id):
     async with aiosqlite.connect("autorole.db") as db:
         async with db.execute("SELECT role_id FROM guild_settings WHERE guild_id = ?", (guild_id,)) as cursor:
@@ -447,6 +522,7 @@ async def set_auto_role(guild_id, role_id):
         await db.commit()
 
 
+# Slash commands
 @bot.tree.command(name="setup_welcome", description="Sets up the welcome channel.")
 @discord.app_commands.describe(channel="The channel where welcome messages will be sent.")
 @discord.app_commands.default_permissions(administrator=True)
@@ -471,6 +547,7 @@ async def setup_leave(interaction: discord.Interaction, channel: discord.TextCha
         color=discord.Color.red()
     ))
 
+# Slash command to set up auto-role
 @bot.tree.command(name="setup_autorole", description="Sets up the auto-role for new members.")
 @discord.app_commands.describe(role="The role to assign to new members.")
 @discord.app_commands.default_permissions(administrator=True)
@@ -483,6 +560,8 @@ async def setup_autorole(interaction: discord.Interaction, role: discord.Role):
         color=discord.Color.green()
     ))
 
+# Event handlers
+# Event handler to give auto-role when a member joins
 @bot.event
 async def on_member_join(member):
     try:
@@ -526,6 +605,7 @@ async def on_member_remove(member):
             embed.set_footer(text="We'll miss you!")
             await channel.send(embed=embed)
 
+# Error handling for setup commands
 @setup_welcome.error
 @setup_leave.error
 async def setup_error(interaction: discord.Interaction, error):
@@ -534,6 +614,7 @@ async def setup_error(interaction: discord.Interaction, error):
     elif isinstance(error, discord.app_commands.BadArgument):
         await interaction.response.send_message("Please mention a valid text channel.")
 
+# Database initialization
 async def initialize_databases():
     async with aiosqlite.connect("join.db") as db:
         await db.execute("CREATE TABLE IF NOT EXISTS guild_settings (guild_id INTEGER PRIMARY KEY, welcome_channel_id INTEGER)")
@@ -547,6 +628,8 @@ async def initialize_databases():
         await db.execute("CREATE TABLE IF NOT EXISTS guild_settings (guild_id INTEGER PRIMARY KEY, role_id INTEGER)")
         await db.commit()
 
+# Auto-moderation code integrated into the main bot file
+# Updated regex pattern with bad words and profanities
 prohibited_words_pattern = re.compile(
     r'\b(shit|piss|fuck|cunt|cocksucker|motherfucker|tits)\b', re.IGNORECASE
 )
@@ -562,48 +645,196 @@ max_caps_percentage = 70
 max_mentions = 5
 
 async def check_permissions(member):
+    """Check if the member has Manage Server permission."""
     return member.guild_permissions.manage_guild
 
 @bot.event
 async def on_message(message):
+    # Ignore bot messages
     if message.author.bot:
         return
 
+    # Check if the author has Manage Server permission
     if await check_permissions(message.author):
         return
 
+    # Prohibited Words
     if prohibited_words_pattern.search(message.content):
         await message.delete()
         await message.author.send("⚠️ Your message contained a prohibited word and was deleted.")
         return
 
+    # Profanity Filtering
     if profanity_pattern.search(message.content):
         await message.delete()
         await message.author.send("⚠️ Your message contained profanity and was deleted.")
         return
 
+    # Link Filtering
     if link_pattern.search(message.content):
+        # If the link is not in the allowed list (check manually as needed)
         await message.delete()
         await message.author.send("⚠️ Your message contained an unapproved link and was deleted.")
         return
 
+    # Caps Lock Detection
     caps_percentage = (sum(1 for c in message.content if c.isupper()) / len(message.content)) * 100
     if caps_percentage > max_caps_percentage:
         await message.delete()
         await message.author.send("⚠️ Your message contained too many uppercase letters and was deleted.")
         return
 
+    # Mention Spam Detection
     mentions = len(mention_pattern.findall(message.content))
     if mentions > max_mentions:
         await message.delete()
         await message.author.send("⚠️ Your message contained too many mentions and was deleted.")
         return
 
+    # Ensure other commands can still be processed
     await bot.process_commands(message)
  
+@bot.tree.command(name="meme", description="Get a random meme from Reddit")
+async def meme(interaction: discord.Interaction):
+    await interaction.response.defer()
+
+    try:
+        timeout = aiohttp.ClientTimeout(total=15)  # Set a 10-second timeout
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            url = "https://www.reddit.com/r/memes/random.json?limit=1"  # Fetch a random post
+            async with session.get(url) as response:
+                if response.status == 200:
+                    meme_data = await response.json()
+                    
+                    if meme_data and isinstance(meme_data, list) and len(meme_data) > 0:
+                        # Extract the random meme from the list
+                        random_meme = meme_data[0]['data']['children'][0]['data']
+                        
+                        meme_title = random_meme.get('title', 'No Title')
+                        meme_url = random_meme.get('url', '')
+                        meme_subreddit = random_meme.get('subreddit_name_prefixed', '')
+                        meme_permalink = f"https://reddit.com{random_meme.get('permalink', '')}"
+                        
+                        embed = discord.Embed(title=meme_title, url=meme_permalink, color=discord.Color.blue())
+                        embed.set_image(url=meme_url)
+                        embed.set_footer(text=f"From {meme_subreddit}")
+                        
+                        await interaction.followup.send(embed=embed)
+                    else:
+                        await interaction.followup.send("No memes found.")
+                else:
+                    await interaction.followup.send(f"Failed to fetch meme. Status code: {response.status}")
+    except Exception as e:
+        await interaction.followup.send(f"An error occurred: {str(e)}")
+        print(e)
+
+# Load or initialize the JSON database
+def load_self_roles_data():
+    if not os.path.exists('self_roles_data.json'):
+        with open('self_roles_data.json', 'w') as f:
+            json.dump({}, f)
+    with open('self_roles_data.json', 'r') as f:
+        return json.load(f)
+
+def save_self_roles_data(data):
+    with open('self_roles_data.json', 'w') as f:
+        json.dump(data, f, indent=4)
+
+self_roles_data = load_self_roles_data()
+
+@bot.tree.command(name="selfroles", description="Set up a self-roles system")
+@discord.app_commands.describe(
+    description="Description for the self-roles system",
+    role1="Role option 1",
+    role2="Role option 2",
+    role3="Role option 3",
+    role4="Role option 4",
+    role5="Role option 5",
+    role6="Role option 6"
+)
+async def selfroles(interaction: discord.Interaction,
+                    description: str,
+                    role1: discord.Role,
+                    role2: discord.Role,
+                    role3: discord.Role = None,
+                    role4: discord.Role = None,
+                    role5: discord.Role = None,
+                    role6: discord.Role = None):
+
+    embed = discord.Embed(
+        title="Choose your role",
+        description=description,
+        color=0x00ff00
+    )
+
+    buttons = [
+        discord.ui.Button(label=role1.name, custom_id=f"role_{role1.id}", style=discord.ButtonStyle.primary),
+        discord.ui.Button(label=role2.name, custom_id=f"role_{role2.id}", style=discord.ButtonStyle.primary)
+    ]
+
+    if role3:
+        buttons.append(discord.ui.Button(label=role3.name, custom_id=f"role_{role3.id}", style=discord.ButtonStyle.primary))
+    if role4:
+        buttons.append(discord.ui.Button(label=role4.name, custom_id=f"role_{role4.id}", style=discord.ButtonStyle.primary))
+    if role5:
+        buttons.append(discord.ui.Button(label=role5.name, custom_id=f"role_{role5.id}", style=discord.ButtonStyle.primary))
+    if role6:
+        buttons.append(discord.ui.Button(label=role6.name, custom_id=f"role_{role6.id}", style=discord.ButtonStyle.primary))
+
+    view = discord.ui.View()
+    for button in buttons:
+        view.add_item(button)
+
+    await interaction.response.send_message(embed=embed, view=view)
+    message = await interaction.original_response()
+
+    # Store role IDs and their corresponding custom IDs
+    self_roles_data[str(message.id)] = {
+        'guild_id': interaction.guild_id,
+        'channel_id': interaction.channel_id,
+        'roles': {button.custom_id.split('_')[1]: button.custom_id for button in buttons}
+    }
+    save_self_roles_data(self_roles_data)
+    
+
+@bot.event
+async def on_interaction(interaction: discord.Interaction):
+    custom_id = interaction.data['custom_id']
+
+    if custom_id == "giveaway_enter":
+        message_id = str(interaction.message.id)
+        giveaway = giveaway_data.get(message_id)
+        
+        if giveaway:
+            if interaction.user.id not in giveaway['participants']:
+                giveaway['participants'].append(interaction.user.id)
+                await interaction.response.send_message("You have entered the giveaway!", ephemeral=True)
+                save_giveaway_data(giveaway_data)
+            else:
+                await interaction.response.send_message("You have already entered the giveaway.", ephemeral=True)
+
+    elif custom_id.startswith("selfrole_"):
+        role_id = int(custom_id.split('_')[1])
+        guild = bot.get_guild(interaction.guild_id)
+        role = guild.get_role(role_id)
+        member = guild.get_member(interaction.user.id)
+
+        if role and member:
+            if role in member.roles:
+                await member.remove_roles(role, reason="Role removed by user.")
+                await interaction.response.send_message(f"Removed the {role.name} role.", ephemeral=True)
+            else:
+                await member.add_roles(role, reason="Role added by user.")
+                await interaction.response.send_message(f"Added the {role.name} role.", ephemeral=True)
+        else:
+            await interaction.response.send_message("Role or member not found.", ephemeral=True)
+
+
 async def main():   
+    # Run the bot
     await bot.start(Token)
 
+# Use asyncio.run to run the asynchronous main function
 if __name__ == "__main__":
     try:
         asyncio.run(main())
