@@ -3,16 +3,16 @@ from discord.ext import commands
 import aiohttp
 from discord.ui import *
 from api import Token
+import aiosqlite
 import sys
+import re
 import os
 import json
 import asyncio
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-intents = discord.Intents.default()
-intents.members = True  # Enable guild members intent
-intents.message_content = True  # Enable message content intent
+intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 warnings = {}
@@ -36,6 +36,7 @@ verification_data = load_verification_data()
 async def on_ready():
     print(f"{bot.user} has connected to Discord!")
     try:
+        await initialize_databases()
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} commands")
     except Exception as e:
@@ -62,6 +63,13 @@ async def on_ready():
             continue
 
     print(f'{bot.user} is ready and monitoring verification messages!')
+    while True:
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Slash commands"))
+        await asyncio.sleep(10)
+
+        total_members = sum(guild.member_count for guild in bot.guilds)
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"{total_members} members"))
+        await asyncio.sleep(10)
 
 @bot.event
 async def on_raw_reaction_add(payload):
@@ -115,23 +123,23 @@ async def setup_automod_command(interaction: discord.Interaction, channel: disco
 
     auto_mod_rule = {
         "name": "Prohibit offensive language",
-        "event_type": 1,  # MESSAGE_SEND
-        "trigger_type": 1,  # KEYWORD
+        "event_type": 1,  
+        "trigger_type": 1,  
         "trigger_metadata": {
             "keyword_filter": ["bad word 1", "bad word 2"]
         },
         "actions": [
             {
-                "type": 1,  # BLOCK_MESSAGE
+                "type": 1,  
             },
             {
-                "type": 2,  # SEND_ALERT_MESSAGE
+                "type": 2,  
                 "metadata": {
                     "channel_id": channel.id
                 }
             }
         ],
-        "enabled": True  # Enable the rule
+        "enabled": True  
     }
 
     async with aiohttp.ClientSession() as session:
@@ -151,24 +159,53 @@ async def setup_automod_command(interaction: discord.Interaction, channel: disco
             headers=headers,
             json=auto_mod_rule
         ) as resp:
-            if resp.status == 201 or 200 or 204:
-                await interaction.response.send_message(f"Automod rule created for {interaction.guild.name} in {channel.mention}")
+            if resp.status in [200,201,204]:
+                await interaction.response.send_message(f"Automod rule created for {interaction.guild.name}. alert channel is {channel.mention}", ephemeral=True)
             else:
                 error_text = await resp.text()
                 await interaction.response.send_message(f"Error creating automod rule: {resp.status} - {error_text}", ephemeral=True)
 
-# @bot.command(name="globalinfo", help="Displays global information including total member count, channel count, and server count across all servers.")
-# async def globalinfo(ctx):
-#     total_members = sum(guild.member_count for guild in bot.guilds)
-#     total_channels = sum(len(guild.channels) for guild in bot.guilds)
-#     total_servers = len(bot.guilds)
-# 
-#     embed = discord.Embed(title="Global Bot Information", color=0x00ff00)
-#     embed.add_field(name="Total Member Count", value=total_members, inline=False)
-#     embed.add_field(name="Total Channel Count", value=total_channels, inline=False)
-#     embed.add_field(name="Total Server Count", value=total_servers, inline=False)
-#
-#     await ctx.send(embed=embed)
+@bot.command(name="globalinfo", help="Displays global information including total member count, channel count, and server count across all servers.")
+async def globalinfo(ctx):
+    total_members = sum(guild.member_count for guild in bot.guilds)
+    total_channels = sum(len(guild.channels) for guild in bot.guilds)
+    total_servers = len(bot.guilds)
+
+    embed = discord.Embed(title="Global Bot Information", color=0x00ff00)
+    embed.add_field(name="Total Member Count", value=total_members, inline=False)
+    embed.add_field(name="Total Channel Count", value=total_channels, inline=False)
+    embed.add_field(name="Total Server Count", value=total_servers, inline=False)
+
+    await ctx.send(embed=embed)
+
+@bot.command(name="serverinvites", help="Displays invite links for all servers the bot is in.")
+@commands.is_owner()
+async def serverinvites(ctx):
+    invite_links = []
+    
+    for guild in bot.guilds:
+        for channel in guild.text_channels:
+            try:
+                invite = await channel.create_invite(max_age=86400, max_uses=1, reason="Generated for server list command")
+                invite_links.append(f"{guild.name}: {invite.url}")
+                break 
+            except discord.Forbidden:
+                invite_links.append(f"{guild.name}: Missing Permissions to create an invite.")
+                break 
+            except Exception as e:
+                invite_links.append(f"{guild.name}: Error creating invite - {e}")
+                break
+
+    # Check if any invites were generated
+    if invite_links:
+        embed = discord.Embed(title="Server Invite Links", color=0x00ff00)
+        for invite in invite_links:
+            embed.add_field(name="\u200b", value=invite, inline=False)
+    else:
+        embed = discord.Embed(title="Server Invite Links", description="No invites could be generated.", color=0xff0000)
+
+    await ctx.send(embed=embed)
+
 
 @bot.tree.command(name="verify", description="Sets up a verification system")
 @discord.app_commands.default_permissions(administrator=True)
@@ -194,7 +231,6 @@ async def verify(interaction: discord.Interaction, role: discord.Role):
 
     await interaction.followup.send("Verification system set up successfully!", ephemeral=True)
 
-# Slash command for kick
 @bot.tree.command(name="kick", description="Kicks a user from the server")
 @discord.app_commands.default_permissions(kick_members=True)
 @discord.app_commands.describe(member="Member to kick", reason="Reason for the kick")
@@ -210,12 +246,13 @@ async def kick(interaction: discord.Interaction, member: discord.Member, reason:
     await member.kick(reason=reason)
     await interaction.response.send_message(f'User {member} has been kicked for reason: {reason}')
 
-# Slash command for ban
 @bot.tree.command(name="ban", description="Bans a user from the server")
 @discord.app_commands.default_permissions(ban_members=True)
 @discord.app_commands.describe(member="Member to ban", reason="Reason for the ban")
 async def ban(interaction: discord.Interaction, member: discord.Member, reason: str = None):
     try:
+        await member.ban(reason=reason)
+        await interaction.response.send_message(f'User {member} has been banned for reason: {reason}')
         if member == interaction.user:
             await interaction.response.send_message("You can't ban yourself :no_entry:", ephemeral=True)
             return
@@ -223,21 +260,21 @@ async def ban(interaction: discord.Interaction, member: discord.Member, reason: 
         if member.top_role >= interaction.user.top_role:
             await interaction.response.send_message(f"You can't do that to the user :no_entry:", ephemeral=True)
             return
-        
-        await member.ban(reason=reason)
-        await interaction.response.send_message(f'User {member} has been banned for reason: {reason}')
-    except:
-        await interaction.response.send_message("An error occurred while attempting to ban the user.")
-        return
+
+        if commands.BotMissingPermissions:
+            await interaction.response.send_message("Bot Missing Permission. Please contact a Admin :no_entry:", ephemeral=True)
+            return
+    except Exception as e:
+        print(e)
+        await interaction.response.send_message(f"You have caught an ultra rare error while trying to ban the member.")    
 
 
-# Slash command for unban
+
 @bot.tree.command(name="unban", description="Unbans a user from the server")
 @discord.app_commands.default_permissions(ban_members=True)
 @discord.app_commands.describe(user="User to unban")
 async def unban(interaction: discord.Interaction, user: discord.User):
-    banned_users = await interaction.guild.bans()
-    for ban_entry in banned_users:
+    async for ban_entry in interaction.guild.bans():
         banned_user = ban_entry.user
         if banned_user == user:
             await interaction.guild.unban(banned_user)
@@ -245,7 +282,6 @@ async def unban(interaction: discord.Interaction, user: discord.User):
             return
     await interaction.response.send_message(f'User {user} was not found in the banned list.')
 
-# Slash command for mute
 @bot.tree.command(name="mute", description="Mutes a user in the server")
 @discord.app_commands.default_permissions(manage_roles=True)
 @discord.app_commands.describe(member="Member to mute", reason="Reason for the mute")
@@ -277,7 +313,6 @@ async def mute(interaction: discord.Interaction, member: discord.Member, reason:
 
     await interaction.response.send_message(embed=embed)
 
-# Slash command for unmute
 @bot.tree.command(name="unmute", description="Unmutes a user in the server")
 @discord.app_commands.default_permissions(manage_roles=True)
 @discord.app_commands.describe(member="Member to unmute")
@@ -302,7 +337,6 @@ async def unmute(interaction: discord.Interaction, member: discord.Member):
 
     await interaction.response.send_message(embed=embed)
 
-# Slash command for warn
 @bot.tree.command(name="warn", description="Warns a user in the server")
 @discord.app_commands.default_permissions(manage_messages=True)
 @discord.app_commands.describe(member="Member to warn", reason="Reason for the warning")
@@ -313,7 +347,6 @@ async def warn(interaction: discord.Interaction, member: discord.Member, reason:
     warnings[member.id].append(reason)
     await interaction.response.send_message(f'User {member} has been warned for: {reason}')
 
-# Slash command for checking warnings
 @bot.tree.command(name="warnings", description="Shows warnings of a user")
 @discord.app_commands.default_permissions(manage_messages=True)
 @discord.app_commands.describe(member="Member whose warnings to display")
@@ -324,7 +357,6 @@ async def warnings_command(interaction: discord.Interaction, member: discord.Mem
     else:
         await interaction.response.send_message(f'User {member} has no warnings.')
 
-# Slash command for help
 class HelpSelect(discord.ui.Select):
     def __init__(self):
         options = [
@@ -340,7 +372,10 @@ class HelpSelect(discord.ui.Select):
             admin_commands = {
                 "verify": "Sets up a verification system. Usage: /verify @Role",
                 "ban": "Bans a user from the server. Usage: /ban @User [reason]",
-                "unban": "Unbans a user from the server. Usage: /unban User#1234"
+                "unban": "Unbans a user from the server. Usage: /unban User#1234",
+                "setup_automod": "Sets up automod for your guild. Usage: /setup_automod #alert-channel",
+                "setup_welcome": "Sets up the welcome channel. Usage: /setup_welcome #channel",
+                "setup_leave": "Sets up the leave channel. Usage: /setup_leave #channel"
             }
             for cmd, desc in admin_commands.items():
                 embed.add_field(name=cmd, value=desc, inline=False)
@@ -360,8 +395,8 @@ class HelpSelect(discord.ui.Select):
             embed = discord.Embed(title="Member Commands", color=0x0000ff)
             member_commands = {
                 "help": "Shows all commands usage. Usage: /help",
-                "customembed": "Make your custom embed. Usage: /customembed <title> <description>",
-                "ping": "Shows the bot response time. Usage: /ping"
+                "customembed": "Make your custom oneline embed. Usage: /customembed <title> <description>",
+                "ping": "Shows the bot's response time"
             }
             for cmd, desc in member_commands.items():
                 embed.add_field(name=cmd, value=desc, inline=False)
@@ -379,37 +414,227 @@ async def help_command(interaction: discord.Interaction):
     embed.set_author(name="Authz Reloaded Commands", icon_url=bot.user.avatar)
     embed.add_field(name="**Admin Commands**", value="Select Below")
     embed.add_field(name="**Mod Commands**", value="Select Below")
-    embed.add_field(name="**Member Commands**", value="Select Below (Not Complete)")
+    embed.add_field(name="**Member Commands**", value="Select Below")
     await interaction.response.send_message(embed=embed, view=HelpView())
 
-# Slash command for custom embed
 @bot.tree.command(name="customembed", description="Create a custom embed")
 @discord.app_commands.describe(title="Title of the embed", description="Description of the embed")
 async def customembed(interaction: discord.Interaction, title: str, description: str):
     embed = discord.Embed(title=title, description=description, color=0xe33235)
     await interaction.response.send_message(embed=embed)
 
-# Slash command for purge
 @bot.tree.command(name="purge", description="Deletes a specified number of messages from the channel")
 @discord.app_commands.default_permissions(manage_messages=True)
 @discord.app_commands.describe(amount="Number of messages to delete")
 async def purge(interaction: discord.Interaction, amount: int):
+    await interaction.response.defer(ephemeral=True)
     if amount <= 0:
-        await interaction.response.send_message("Please specify a positive number of messages to delete.", ephemeral=True)
+        await interaction.followup.send("Please specify a positive number of messages to delete.", ephemeral=True)
         return
 
     deleted = await interaction.channel.purge(limit=amount)
-    await interaction.response.send_message(f"Deleted {len(deleted)} messages.", ephemeral=True)
+    await interaction.followup.send(f"Deleted {len(deleted)} messages.", ephemeral=True)
 
 @bot.tree.command(name="ping", description="Shows the bot ping/response time")
 async def ping(interaction: discord.Interaction):
     embed = discord.Embed(title="Authz Bot Ping", description=f"**Ping**: {round(bot.latency * 1000)}ms", color=0x19a61b)
     embed.set_footer(text=f"Requested by • {interaction.user.name}.")
     await interaction.response.send_message(embed=embed)
+    
+async def get_welcome_channel(guild_id):
+    async with aiosqlite.connect("join.db") as db:
+        async with db.execute("SELECT welcome_channel_id FROM guild_settings WHERE guild_id = ?", (guild_id,)) as cursor:
+            row = await cursor.fetchone()
+            return row[0] if row else None
 
-# Run the bot
+async def set_welcome_channel(guild_id, channel_id):
+    async with aiosqlite.connect("join.db") as db:
+        await db.execute("INSERT OR REPLACE INTO guild_settings (guild_id, welcome_channel_id) VALUES (?, ?)", (guild_id, channel_id))
+        await db.commit()
+
+async def get_leave_channel(guild_id):
+    async with aiosqlite.connect("leave.db") as db:
+        async with db.execute("SELECT leave_channel_id FROM guild_settings WHERE guild_id = ?", (guild_id,)) as cursor:
+            row = await cursor.fetchone()
+            return row[0] if row else None
+
+async def set_leave_channel(guild_id, channel_id):
+    async with aiosqlite.connect("leave.db") as db:
+        await db.execute("INSERT OR REPLACE INTO guild_settings (guild_id, leave_channel_id) VALUES (?, ?)", (guild_id, channel_id))
+        await db.commit()
+
+async def get_auto_role(guild_id):
+    async with aiosqlite.connect("autorole.db") as db:
+        async with db.execute("SELECT role_id FROM guild_settings WHERE guild_id = ?", (guild_id,)) as cursor:
+            row = await cursor.fetchone()
+            return row[0] if row else None
+
+async def set_auto_role(guild_id, role_id):
+    async with aiosqlite.connect("autorole.db") as db:
+        await db.execute("INSERT OR REPLACE INTO guild_settings (guild_id, role_id) VALUES (?, ?)", (guild_id, role_id))
+        await db.commit()
+
+
+@bot.tree.command(name="setup_welcome", description="Sets up the welcome channel.")
+@discord.app_commands.describe(channel="The channel where welcome messages will be sent.")
+@discord.app_commands.default_permissions(administrator=True)
+async def setup_welcome(interaction: discord.Interaction, channel: discord.TextChannel):
+    await interaction.response.defer()
+    await set_welcome_channel(interaction.guild.id, channel.id)
+    await interaction.followup.send(embed=discord.Embed(
+        title="Welcome Channel Set",
+        description=f"The welcome channel has been set to {channel.mention}.",
+        color=discord.Color.green()
+    ))
+
+@bot.tree.command(name="setup_leave", description="Sets up the leave channel.")
+@discord.app_commands.describe(channel="The channel where leave messages will be sent.")
+@discord.app_commands.default_permissions(administrator=True)
+async def setup_leave(interaction: discord.Interaction, channel: discord.TextChannel):
+    await interaction.response.defer()
+    await set_leave_channel(interaction.guild.id, channel.id)
+    await interaction.followup.send(embed=discord.Embed(
+        title="Leave Channel Set",
+        description=f"The leave channel has been set to {channel.mention}.",
+        color=discord.Color.red()
+    ))
+
+@bot.tree.command(name="setup_autorole", description="Sets up the auto-role for new members.")
+@discord.app_commands.describe(role="The role to assign to new members.")
+@discord.app_commands.default_permissions(administrator=True)
+async def setup_autorole(interaction: discord.Interaction, role: discord.Role):
+    await interaction.response.defer()
+    await set_auto_role(interaction.guild.id, role.id)
+    await interaction.followup.send(embed=discord.Embed(
+        title="Auto-Role Set",
+        description=f"The auto-role has been set to {role.mention}.",
+        color=discord.Color.green()
+    ))
+
+@bot.event
+async def on_member_join(member):
+    try:
+        guild_id = member.guild.id
+        auto_role_id = await get_auto_role(guild_id)
+        if auto_role_id:
+            role = member.guild.get_role(auto_role_id)
+            if role:
+                await member.add_roles(role)
+                # Send a welcome message with the role (optional)
+                welcome_channel_id = await get_welcome_channel(guild_id)
+                if welcome_channel_id:
+                    channel = bot.get_channel(welcome_channel_id)
+                    if channel:
+                        embed = discord.Embed(
+                            title="🎉 Welcome to the Server!",
+                            description=f"Hello {member.mention}, we're thrilled to have you at {member.guild.name}",
+                            color=discord.Color.blue()
+                        )
+                        embed.set_thumbnail(url=member.avatar.url)
+                        embed.add_field(name="Member Count", value=f"{member.guild.member_count}", inline=True)
+                        embed.set_footer(text="Enjoy your stay!")
+                        await channel.send(embed=embed)
+    except Exception as e:
+        print(f"Error occurred while handling member join event: {e}")
+
+@bot.event
+async def on_member_remove(member):
+    guild_id = member.guild.id
+    leave_channel_id = await get_leave_channel(guild_id)
+    if leave_channel_id:
+        channel = bot.get_channel(leave_channel_id)
+        if channel:
+            embed = discord.Embed(
+                title="😢 Goodbye!",
+                description=f"{member.name} has left the server.",
+                color=discord.Color.orange()
+            )
+            embed.set_thumbnail(url=member.avatar.url)
+            embed.add_field(name="We hope to see you again!", value="Goodbye!", inline=True)
+            embed.set_footer(text="We'll miss you!")
+            await channel.send(embed=embed)
+
+@setup_welcome.error
+@setup_leave.error
+async def setup_error(interaction: discord.Interaction, error):
+    if isinstance(error, discord.app_commands.MissingPermissions):
+        await interaction.response.send_message("You don't have permission to use this command.")
+    elif isinstance(error, discord.app_commands.BadArgument):
+        await interaction.response.send_message("Please mention a valid text channel.")
+
+async def initialize_databases():
+    async with aiosqlite.connect("join.db") as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS guild_settings (guild_id INTEGER PRIMARY KEY, welcome_channel_id INTEGER)")
+        await db.commit()
+    
+    async with aiosqlite.connect("leave.db") as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS guild_settings (guild_id INTEGER PRIMARY KEY, leave_channel_id INTEGER)")
+        await db.commit()
+    
+    async with aiosqlite.connect("autorole.db") as db:
+        await db.execute("CREATE TABLE IF NOT EXISTS guild_settings (guild_id INTEGER PRIMARY KEY, role_id INTEGER)")
+        await db.commit()
+
+prohibited_words_pattern = re.compile(
+    r'\b(shit|piss|fuck|cunt|cocksucker|motherfucker|tits)\b', re.IGNORECASE
+)
+profanity_pattern = re.compile(
+    r'\b(bitch|asshole|dick|slut|nigger|whore|fag|faggot|cocks|cum)\b', re.IGNORECASE
+)
+link_pattern = re.compile(r'http[s]?://\S+', re.IGNORECASE)
+caps_lock_pattern = re.compile(r'[A-Z]{2,}', re.IGNORECASE)
+mention_pattern = re.compile(r'<@!?\d+>', re.IGNORECASE)
+
+spam_count = 5
+max_caps_percentage = 70
+max_mentions = 5
+
+async def check_permissions(member):
+    return member.guild_permissions.manage_guild
+
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    if await check_permissions(message.author):
+        return
+
+    if prohibited_words_pattern.search(message.content):
+        await message.delete()
+        await message.author.send("⚠️ Your message contained a prohibited word and was deleted.")
+        return
+
+    if profanity_pattern.search(message.content):
+        await message.delete()
+        await message.author.send("⚠️ Your message contained profanity and was deleted.")
+        return
+
+    if link_pattern.search(message.content):
+        await message.delete()
+        await message.author.send("⚠️ Your message contained an unapproved link and was deleted.")
+        return
+
+    caps_percentage = (sum(1 for c in message.content if c.isupper()) / len(message.content)) * 100
+    if caps_percentage > max_caps_percentage:
+        await message.delete()
+        await message.author.send("⚠️ Your message contained too many uppercase letters and was deleted.")
+        return
+
+    mentions = len(mention_pattern.findall(message.content))
+    if mentions > max_mentions:
+        await message.delete()
+        await message.author.send("⚠️ Your message contained too many mentions and was deleted.")
+        return
+
+    await bot.process_commands(message)
+ 
+async def main():   
+    await bot.start(Token)
+
 if __name__ == "__main__":
     try:
-        bot.run(Token)
+        asyncio.run(main())
+        initialize_databases()
     except Exception as e:
         print(f"Error running the bot: {e}")
