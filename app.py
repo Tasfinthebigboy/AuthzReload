@@ -165,46 +165,18 @@ async def setup_automod_command(interaction: discord.Interaction, channel: disco
                 error_text = await resp.text()
                 await interaction.response.send_message(f"Error creating automod rule: {resp.status} - {error_text}", ephemeral=True)
 
-@bot.command(name="globalinfo", help="Displays global information including total member count, channel count, and server count across all servers.")
-async def globalinfo(ctx):
-    total_members = sum(guild.member_count for guild in bot.guilds)
-    total_channels = sum(len(guild.channels) for guild in bot.guilds)
-    total_servers = len(bot.guilds)
-
-    embed = discord.Embed(title="Global Bot Information", color=0x00ff00)
-    embed.add_field(name="Total Member Count", value=total_members, inline=False)
-    embed.add_field(name="Total Channel Count", value=total_channels, inline=False)
-    embed.add_field(name="Total Server Count", value=total_servers, inline=False)
-
-    await ctx.send(embed=embed)
-
-@bot.command(name="serverinvites", help="Displays invite links for all servers the bot is in.")
-@commands.is_owner()
-async def serverinvites(ctx):
-    invite_links = []
-    
-    for guild in bot.guilds:
-        for channel in guild.text_channels:
-            try:
-                invite = await channel.create_invite(max_age=86400, max_uses=1, reason="Generated for server list command")
-                invite_links.append(f"{guild.name}: {invite.url}")
-                break 
-            except discord.Forbidden:
-                invite_links.append(f"{guild.name}: Missing Permissions to create an invite.")
-                break 
-            except Exception as e:
-                invite_links.append(f"{guild.name}: Error creating invite - {e}")
-                break
-
-    # Check if any invites were generated
-    if invite_links:
-        embed = discord.Embed(title="Server Invite Links", color=0x00ff00)
-        for invite in invite_links:
-            embed.add_field(name="\u200b", value=invite, inline=False)
-    else:
-        embed = discord.Embed(title="Server Invite Links", description="No invites could be generated.", color=0xff0000)
-
-    await ctx.send(embed=embed)
+# @bot.command(name="globalinfo", help="Displays global information including total member count, channel count, and server count across all servers.")
+# async def globalinfo(ctx):
+#     total_members = sum(guild.member_count for guild in bot.guilds)
+#     total_channels = sum(len(guild.channels) for guild in bot.guilds)
+#     total_servers = len(bot.guilds)
+# 
+#     embed = discord.Embed(title="Global Bot Information", color=0x00ff00)
+#     embed.add_field(name="Total Member Count", value=total_members, inline=False)
+#     embed.add_field(name="Total Channel Count", value=total_channels, inline=False)
+#     embed.add_field(name="Total Server Count", value=total_servers, inline=False)
+#
+#     await ctx.send(embed=embed)
 
 
 @bot.tree.command(name="verify", description="Sets up a verification system")
