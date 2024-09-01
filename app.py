@@ -6,6 +6,7 @@ from api import Token
 import aiosqlite
 import sys
 import re
+from async_timeout import timeout
 import os
 import json
 import asyncio
@@ -13,7 +14,7 @@ import asyncio
 sys.stdout.reconfigure(encoding='utf-8')
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
+bot = commands.Bot(command_prefix="m!", intents=intents, help_command=None)
 
 warnings = {}
 
@@ -198,6 +199,35 @@ async def globalinfo(ctx):
     embed.add_field(name="Total Server Count", value=total_servers, inline=False)
 
     await ctx.send(embed=embed)
+
+@bot.command(name="serverinvites", help="Displays invite links for all servers the bot is in.")
+@commands.is_owner()
+async def serverinvites(ctx):
+    invite_links = []
+    
+    for guild in bot.guilds:
+        for channel in guild.text_channels:
+            try:
+                invite = await channel.create_invite(max_age=86400, max_uses=1, reason="Generated for server list command")
+                invite_links.append(f"{guild.name}: {invite.url}")
+                break 
+            except discord.Forbidden:
+                invite_links.append(f"{guild.name}: Missing Permissions to create an invite.")
+                break 
+            except Exception as e:
+                invite_links.append(f"{guild.name}: Error creating invite - {e}")
+                break
+
+    # Check if any invites were generated
+    if invite_links:
+        embed = discord.Embed(title="Server Invite Links", color=0x00ff00)
+        for invite in invite_links:
+            embed.add_field(name="\u200b", value=invite, inline=False)
+    else:
+        embed = discord.Embed(title="Server Invite Links", description="No invites could be generated.", color=0xff0000)
+
+    await ctx.send(embed=embed)
+
 
 @bot.tree.command(name="verify", description="Sets up a verification system")
 @discord.app_commands.default_permissions(administrator=True)
@@ -401,13 +431,42 @@ class HelpView(discord.ui.View):
         self.add_item(HelpSelect())
 
 @bot.tree.command(name="help", description="Shows all commands usage")
-async def help_command(interaction: discord.Interaction):
-    embed = discord.Embed(color=0x00ff00)
-    embed.set_author(name="Authz Reloaded Commands", icon_url=bot.user.avatar)
-    embed.add_field(name="**Admin Commands**", value="Select Below")
-    embed.add_field(name="**Mod Commands**", value="Select Below")
-    embed.add_field(name="**Member Commands**", value="Select Below")
-    await interaction.response.send_message(embed=embed, view=HelpView())
+@discord.app_commands.describe(command="Get detailed information about a specific command")
+async def help_command(interaction: discord.Interaction, command: str = None):
+    if command:
+        embed = discord.Embed(title=f"Help: {command}", color=0x00ff00)
+        command_info = {
+            "verify": "Sets up a verification system. Usage: /verify @Role",
+            "ban": "Bans a user from the server. Usage: /ban @User [reason]",
+            "unban": "Unbans a user from the server. Usage: /unban User#1234",
+            "setup_automod": "Sets up automod for your guild. Usage: /setup_automod #alert-channel",
+            "setup_welcome": "Sets up the welcome channel. Usage: /setup_welcome #channel",
+            "setup_leave": "Sets up the leave channel. Usage: /setup_leave #channel",
+            "kick": "Kicks a user from the server. Usage: /kick @User [reason]",
+            "mute": "Mutes a user in the server. Usage: /mute @User [reason]",
+            "unmute": "Unmutes a user in the server. Usage: /unmute @User",
+            "warn": "Warns a user in the server. Usage: /warn @User [reason]",
+            "purge": "Purges a user from the server. Usage: /purge [amount]",
+            "warnings": "Shows warnings of a user. Usage: /warnings @User",
+            "help": "Shows all commands usage. Usage: /help",
+            "customembed": "Make your custom oneline embed. Usage: /customembed <title> <description>",
+            "ping": "Shows the bot's response time",
+            "count": "Starts a counting game in the specified channel. Usage: /count channel: #counting\n\n**Counting Rules:**\n1) No skipping numbers\n2) No going back in numbers\n3) Must alternate counters (except for solo mode)\n4) No botting, scripting or abusing bugs\n5) Do not intentionally ruin the count"
+        }
+
+        if command in command_info:
+            embed.description = command_info[command]
+        else:
+            embed.description = "Command not found."
+        
+        await interaction.response.send_message(embed=embed)
+    else:
+        embed = discord.Embed(color=0x00ff00)
+        embed.set_author(name="Authz Reloaded Commands", icon_url=bot.user.avatar)
+        embed.add_field(name="**Admin Commands**", value="Select Below")
+        embed.add_field(name="**Mod Commands**", value="Select Below")
+        embed.add_field(name="**Member Commands**", value="Select Below")
+        await interaction.response.send_message(embed=embed, view=HelpView())
 
 @bot.tree.command(name="customembed", description="Create a custom embed")
 @discord.app_commands.describe(
@@ -799,22 +858,10 @@ async def selfroles(interaction: discord.Interaction,
 
 @bot.event
 async def on_interaction(interaction: discord.Interaction):
-    custom_id = interaction.data['custom_id']
-
-    if custom_id == "giveaway_enter":
-        message_id = str(interaction.message.id)
-        giveaway = giveaway_data.get(message_id)
-        
-        if giveaway:
-            if interaction.user.id not in giveaway['participants']:
-                giveaway['participants'].append(interaction.user.id)
-                await interaction.response.send_message("You have entered the giveaway!", ephemeral=True)
-                save_giveaway_data(giveaway_data)
-            else:
-                await interaction.response.send_message("You have already entered the giveaway.", ephemeral=True)
-
-    elif custom_id.startswith("selfrole_"):
+    if interaction.type == discord.InteractionType.component:
+        custom_id = interaction.data['custom_id']
         role_id = int(custom_id.split('_')[1])
+
         guild = bot.get_guild(interaction.guild_id)
         role = guild.get_role(role_id)
         member = guild.get_member(interaction.user.id)
@@ -829,8 +876,34 @@ async def on_interaction(interaction: discord.Interaction):
         else:
             await interaction.response.send_message("Role or member not found.", ephemeral=True)
 
+@bot.tree.command(name="serverinfo", description="Displays information about the server.")
+async def server_info(interaction: discord.Interaction):
+    await interaction.response.defer()
+    guild = interaction.guild
+    embed = discord.Embed(title=f"[ {guild.name} ] Server Information", color=discord.Color.blue())
+    embed.add_field(name="🆔 Server ID:", value=guild.id, inline=True)
+    embed.add_field(name="👑 Owner:", value=guild.owner.mention, inline=True)
+    embed.add_field(name="📅 Created:", value=f"{(discord.utils.snowflake_time(guild.id)).strftime('%Y-%m-%d')}", inline=True)
+    embed.add_field(name="📊 Channels:", value=f"Text: {len(guild.text_channels)}, Voice: {len(guild.voice_channels)}", inline=True)
+    embed.add_field(name="👥 Members:", value=guild.member_count, inline=True)
+    embed.add_field(name="🎭 Roles:", value=len(guild.roles), inline=True)
+    
+    await interaction.followup.send(embed=embed)
 
-async def main():   
+async def load_cogs():
+    # List your cog files here (omit the .py extension)
+    cogs = ["cogs.counting"]
+    
+    for cog in cogs:
+        try:
+            await bot.load_extension(cog)
+            print(f"Loaded {cog}")
+        except Exception as e:
+            print(f"Failed to load {cog}: {e}")
+
+async def main(): 
+    # Load cogs
+    await load_cogs()
     # Run the bot
     await bot.start(Token)
 
