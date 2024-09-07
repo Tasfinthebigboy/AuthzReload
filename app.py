@@ -1,12 +1,12 @@
 import discord
 from discord.ext import commands
-import aiohttp
 from discord.ui import *
 from api import Token
 import aiosqlite
+import aiohttp
+import time
 import sys
 import re
-from async_timeout import timeout
 import os
 import json
 import asyncio
@@ -17,6 +17,8 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="m!", intents=intents, help_command=None)
 
 warnings = {}
+
+start_time = time.time()
 
 VERIFICATION_DATA_FILE = 'verification_data.json'
 
@@ -40,15 +42,48 @@ async def on_ready():
         await initialize_databases()
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} commands")
+        uptime = int(time.time() - start_time)
+        async with aiohttp.ClientSession() as session:
+            await session.get(f'http://127.0.0.1:5000/set_ready/{uptime}')
+            print(f'Bot is ready! Uptime: {uptime} seconds')
     except Exception as e:
         print(f"Error during command sync: {e}")
 
+    # Verify that verification_data is properly loaded
+    if not verification_data:
+        print("Verification data is empty or not loaded.")
+        return
+
+    # Run verification message checking asynchronously
+    asyncio.create_task(check_verification_messages())
+
+    # Start presence update loop asynchronously
+    asyncio.create_task(update_presence_loop())
+
+    print(f'{bot.user} is ready and monitoring verification messages!')
+
+
+async def check_verification_messages():
     for message_id, data in verification_data.items():
         guild = bot.get_guild(data['guild_id'])
+        
+        # Check if the bot is in the guild
+        if guild is None:
+            print(f"Guild with ID {data['guild_id']} not found.")
+            continue
+        
         channel = guild.get_channel(data['channel_id'])
+        
+        # Check if the channel exists
+        if channel is None:
+            print(f"Channel with ID {data['channel_id']} not found in guild {guild.name}.")
+            continue
+
         try:
+            # Attempt to fetch the message
             message = await channel.fetch_message(int(message_id))
-            
+
+            # Check and reset reactions
             for reaction in message.reactions:
                 if str(reaction.emoji) == '✅':
                     async for user in reaction.users():
@@ -60,16 +95,23 @@ async def on_ready():
             await message.add_reaction('✅')
 
         except discord.NotFound:
-            print(f"Message with ID {message_id} not found.")
+            print(f"Message with ID {message_id} not found in channel {channel.name}.")
             continue
 
-    print(f'{bot.user} is ready and monitoring verification messages!')
+async def update_presence_loop():
     while True:
-        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Slash commands"))
+        # First activity: watching total server count
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.streaming, name=f"with {len(bot.guilds)} servers", url="https://twitch.tv/discord"))
         await asyncio.sleep(10)
 
+        # Second activity: watching total member count
         total_members = sum(guild.member_count for guild in bot.guilds)
-        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"{total_members} members"))
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.streaming, name=f"with {total_members} members", url="https://twitch.tv/discord"))
+        await asyncio.sleep(10)
+
+        # Second activity: watching total channel count
+        total_channels = sum(len(guild.channels) for guild in bot.guilds)
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.streaming, name=f"with {total_members} channels", url="https://twitch.tv/discord"))
         await asyncio.sleep(10)
 
 @bot.event
@@ -111,123 +153,6 @@ async def on_raw_reaction_add(payload):
                 await message.remove_reaction(payload.emoji, member)
             except discord.Forbidden:
                 pass
-
-                
-@bot.tree.command(name="setup_automod", description="Sets up the automod rules for the server")
-@discord.app_commands.default_permissions(administrator=True)
-@discord.app_commands.describe(channel="Channel to send alert messages to")
-@discord.app_commands.describe(badword="Word that will be blocked")
-async def setup_automod_command(interaction: discord.Interaction, channel: discord.TextChannel, badword: str = None):
-    headers = {
-        "Authorization": f"Bot {bot.http.token}",
-        "Content-Type": "application/json"
-    }
-    if badword is not None:
-        auto_mod_rule = {
-            "name": "Prohibit offensive language",
-            "event_type": 1,  
-            "trigger_type": 1,  
-            "trigger_metadata": {
-                "keyword_filter": [f"{badword}"],
-            },
-            "actions": [
-                {
-                    "type": 1,  
-                },
-                {
-                    "type": 2,  
-                    "metadata": {
-                        "channel_id": channel.id
-                    }
-                }
-            ],
-            "enabled": True  
-        }
-    else:
-        auto_mod_rule = {
-            "name": "Prohibit offensive language",
-            "event_type": 1,  
-            "trigger_type": 1,  
-            "trigger_metadata": {
-                "keyword_filter": [f"Fuck", "Bitch"],
-            },
-            "actions": [
-                {
-                    "type": 1,  
-                },
-                {
-                    "type": 2,  
-                    "metadata": {
-                        "channel_id": channel.id
-                    }
-                }
-            ],
-            "enabled": True  
-        }
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            f"https://discord.com/api/v10/guilds/{interaction.guild.id}/auto-moderation/rules",
-            headers=headers
-        ) as resp:
-            existing_rules = await resp.json()
-            keyword_rules = [rule for rule in existing_rules if rule['trigger_type'] == 1]
-            if len(keyword_rules) >= 6:
-                await interaction.response.send_message("The server has reached the maximum number of keyword-based automod rules.", ephemeral=True)
-                return
-
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-            f"https://discord.com/api/v10/guilds/{interaction.guild.id}/auto-moderation/rules",
-            headers=headers,
-            json=auto_mod_rule
-        ) as resp:
-            if resp.status in [200,201,204]:
-                await interaction.response.send_message(f"Automod rule created for {interaction.guild.name}. alert channel is {channel.mention}", ephemeral=True)
-            else:
-                error_text = await resp.text()
-                await interaction.response.send_message(f"Error creating automod rule: {resp.status} - {error_text}", ephemeral=True)
-
-@bot.command(name="globalinfo", help="Displays global information including total member count, channel count, and server count across all servers.")
-async def globalinfo(ctx):
-    total_members = sum(guild.member_count for guild in bot.guilds)
-    total_channels = sum(len(guild.channels) for guild in bot.guilds)
-    total_servers = len(bot.guilds)
-
-    embed = discord.Embed(title="Global Bot Information", color=0x00ff00)
-    embed.add_field(name="Total Member Count", value=total_members, inline=False)
-    embed.add_field(name="Total Channel Count", value=total_channels, inline=False)
-    embed.add_field(name="Total Server Count", value=total_servers, inline=False)
-
-    await ctx.send(embed=embed)
-
-@bot.command(name="serverinvites", help="Displays invite links for all servers the bot is in.")
-@commands.is_owner()
-async def serverinvites(ctx):
-    invite_links = []
-    
-    for guild in bot.guilds:
-        for channel in guild.text_channels:
-            try:
-                invite = await channel.create_invite(max_age=86400, max_uses=1, reason="Generated for server list command")
-                invite_links.append(f"{guild.name}: {invite.url}")
-                break 
-            except discord.Forbidden:
-                invite_links.append(f"{guild.name}: Missing Permissions to create an invite.")
-                break 
-            except Exception as e:
-                invite_links.append(f"{guild.name}: Error creating invite - {e}")
-                break
-
-    # Check if any invites were generated
-    if invite_links:
-        embed = discord.Embed(title="Server Invite Links", color=0x00ff00)
-        for invite in invite_links:
-            embed.add_field(name="\u200b", value=invite, inline=False)
-    else:
-        embed = discord.Embed(title="Server Invite Links", description="No invites could be generated.", color=0xff0000)
-
-    await ctx.send(embed=embed)
-
 
 @bot.tree.command(name="verify", description="Sets up a verification system")
 @discord.app_commands.default_permissions(administrator=True)
@@ -417,7 +342,7 @@ class HelpSelect(discord.ui.Select):
             embed = discord.Embed(title="Member Commands", color=0x0000ff)
             member_commands = {
                 "help": "Shows all commands usage. Usage: /help",
-                "customembed": "Make your custom oneline embed. Usage: /customembed <title> <description>",
+                "customembed": "Make your custom embed. Usage: /customembed <title> <description>",
                 "ping": "Shows the bot's response time"
             }
             for cmd, desc in member_commands.items():
@@ -625,25 +550,29 @@ async def setup_autorole(interaction: discord.Interaction, role: discord.Role):
 async def on_member_join(member):
     try:
         guild_id = member.guild.id
+        
+        # Check if auto-role is set up
         auto_role_id = await get_auto_role(guild_id)
         if auto_role_id:
             role = member.guild.get_role(auto_role_id)
             if role:
                 await member.add_roles(role)
-                # Send a welcome message with the role (optional)
-                welcome_channel_id = await get_welcome_channel(guild_id)
-                if welcome_channel_id:
-                    channel = bot.get_channel(welcome_channel_id)
-                    if channel:
-                        embed = discord.Embed(
-                            title="🎉 Welcome to the Server!",
-                            description=f"Hello {member.mention}, we're thrilled to have you at {member.guild.name}",
-                            color=discord.Color.blue()
-                        )
-                        embed.set_thumbnail(url=member.avatar.url)
-                        embed.add_field(name="Member Count", value=f"{member.guild.member_count}", inline=True)
-                        embed.set_footer(text="Enjoy your stay!")
-                        await channel.send(embed=embed)
+
+        # Check if welcome channel is set up
+        welcome_channel_id = await get_welcome_channel(guild_id)
+        if welcome_channel_id:
+            channel = bot.get_channel(welcome_channel_id)
+            if channel:
+                embed = discord.Embed(
+                    title="🎉 Welcome to the Server!",
+                    description=f"Hello {member.mention}, we're thrilled to have you at {member.guild.name}",
+                    color=discord.Color.blue()
+                )
+                embed.set_thumbnail(url=member.avatar.url)
+                embed.add_field(name="Member Count", value=f"{member.guild.member_count}", inline=True)
+                embed.set_footer(text="Enjoy your stay!")
+                await channel.send(embed=embed)
+                
     except Exception as e:
         print(f"Error occurred while handling member join event: {e}")
 
@@ -752,147 +681,10 @@ async def on_message(message):
 
     # Ensure other commands can still be processed
     await bot.process_commands(message)
- 
-@bot.tree.command(name="meme", description="Get a random meme from Reddit")
-async def meme(interaction: discord.Interaction):
-    await interaction.response.defer()
-
-    try:
-        timeout = aiohttp.ClientTimeout(total=15)  # Set a 10-second timeout
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            url = "https://www.reddit.com/r/memes/random.json?limit=1"  # Fetch a random post
-            async with session.get(url) as response:
-                if response.status == 200:
-                    meme_data = await response.json()
-                    
-                    if meme_data and isinstance(meme_data, list) and len(meme_data) > 0:
-                        # Extract the random meme from the list
-                        random_meme = meme_data[0]['data']['children'][0]['data']
-                        
-                        meme_title = random_meme.get('title', 'No Title')
-                        meme_url = random_meme.get('url', '')
-                        meme_subreddit = random_meme.get('subreddit_name_prefixed', '')
-                        meme_permalink = f"https://reddit.com{random_meme.get('permalink', '')}"
-                        
-                        embed = discord.Embed(title=meme_title, url=meme_permalink, color=discord.Color.blue())
-                        embed.set_image(url=meme_url)
-                        embed.set_footer(text=f"From {meme_subreddit}")
-                        
-                        await interaction.followup.send(embed=embed)
-                    else:
-                        await interaction.followup.send("No memes found.")
-                else:
-                    await interaction.followup.send(f"Failed to fetch meme. Status code: {response.status}")
-    except Exception as e:
-        await interaction.followup.send(f"An error occurred: {str(e)}")
-        print(e)
-
-# Load or initialize the JSON database
-def load_self_roles_data():
-    if not os.path.exists('self_roles_data.json'):
-        with open('self_roles_data.json', 'w') as f:
-            json.dump({}, f)
-    with open('self_roles_data.json', 'r') as f:
-        return json.load(f)
-
-def save_self_roles_data(data):
-    with open('self_roles_data.json', 'w') as f:
-        json.dump(data, f, indent=4)
-
-self_roles_data = load_self_roles_data()
-
-@bot.tree.command(name="selfroles", description="Set up a self-roles system")
-@discord.app_commands.describe(
-    description="Description for the self-roles system",
-    role1="Role option 1",
-    role2="Role option 2",
-    role3="Role option 3",
-    role4="Role option 4",
-    role5="Role option 5",
-    role6="Role option 6"
-)
-async def selfroles(interaction: discord.Interaction,
-                    description: str,
-                    role1: discord.Role,
-                    role2: discord.Role,
-                    role3: discord.Role = None,
-                    role4: discord.Role = None,
-                    role5: discord.Role = None,
-                    role6: discord.Role = None):
-
-    embed = discord.Embed(
-        title="Choose your role",
-        description=description,
-        color=0x00ff00
-    )
-
-    buttons = [
-        discord.ui.Button(label=role1.name, custom_id=f"role_{role1.id}", style=discord.ButtonStyle.primary),
-        discord.ui.Button(label=role2.name, custom_id=f"role_{role2.id}", style=discord.ButtonStyle.primary)
-    ]
-
-    if role3:
-        buttons.append(discord.ui.Button(label=role3.name, custom_id=f"role_{role3.id}", style=discord.ButtonStyle.primary))
-    if role4:
-        buttons.append(discord.ui.Button(label=role4.name, custom_id=f"role_{role4.id}", style=discord.ButtonStyle.primary))
-    if role5:
-        buttons.append(discord.ui.Button(label=role5.name, custom_id=f"role_{role5.id}", style=discord.ButtonStyle.primary))
-    if role6:
-        buttons.append(discord.ui.Button(label=role6.name, custom_id=f"role_{role6.id}", style=discord.ButtonStyle.primary))
-
-    view = discord.ui.View()
-    for button in buttons:
-        view.add_item(button)
-
-    await interaction.response.send_message(embed=embed, view=view)
-    message = await interaction.original_response()
-
-    # Store role IDs and their corresponding custom IDs
-    self_roles_data[str(message.id)] = {
-        'guild_id': interaction.guild_id,
-        'channel_id': interaction.channel_id,
-        'roles': {button.custom_id.split('_')[1]: button.custom_id for button in buttons}
-    }
-    save_self_roles_data(self_roles_data)
-    
-
-@bot.event
-async def on_interaction(interaction: discord.Interaction):
-    if interaction.type == discord.InteractionType.component:
-        custom_id = interaction.data['custom_id']
-        role_id = int(custom_id.split('_')[1])
-
-        guild = bot.get_guild(interaction.guild_id)
-        role = guild.get_role(role_id)
-        member = guild.get_member(interaction.user.id)
-
-        if role and member:
-            if role in member.roles:
-                await member.remove_roles(role, reason="Role removed by user.")
-                await interaction.response.send_message(f"Removed the {role.name} role.", ephemeral=True)
-            else:
-                await member.add_roles(role, reason="Role added by user.")
-                await interaction.response.send_message(f"Added the {role.name} role.", ephemeral=True)
-        else:
-            await interaction.response.send_message("Role or member not found.", ephemeral=True)
-
-@bot.tree.command(name="serverinfo", description="Displays information about the server.")
-async def server_info(interaction: discord.Interaction):
-    await interaction.response.defer()
-    guild = interaction.guild
-    embed = discord.Embed(title=f"[ {guild.name} ] Server Information", color=discord.Color.blue())
-    embed.add_field(name="🆔 Server ID:", value=guild.id, inline=True)
-    embed.add_field(name="👑 Owner:", value=guild.owner.mention, inline=True)
-    embed.add_field(name="📅 Created:", value=f"{(discord.utils.snowflake_time(guild.id)).strftime('%Y-%m-%d')}", inline=True)
-    embed.add_field(name="📊 Channels:", value=f"Text: {len(guild.text_channels)}, Voice: {len(guild.voice_channels)}", inline=True)
-    embed.add_field(name="👥 Members:", value=guild.member_count, inline=True)
-    embed.add_field(name="🎭 Roles:", value=len(guild.roles), inline=True)
-    
-    await interaction.followup.send(embed=embed)
 
 async def load_cogs():
     # List your cog files here (omit the .py extension)
-    cogs = ["cogs.counting"]
+    cogs = ["cogs.counting", "cogs.avater", "cogs.automod", "cogs.serverinfo", "cogs.reactrole"]
     
     for cog in cogs:
         try:
@@ -905,7 +697,7 @@ async def main():
     # Load cogs
     await load_cogs()
     # Run the bot
-    await bot.start(Token)
+    await bot.start(token=Token)
 
 # Use asyncio.run to run the asynchronous main function
 if __name__ == "__main__":
