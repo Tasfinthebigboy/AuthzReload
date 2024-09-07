@@ -1,20 +1,153 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<html>
- <head>
-  <title>Index of /cogs</title>
- </head>
- <body>
-<h1>Index of /cogs</h1>
-  <table>
-   <tr><th valign="top"><img src="/AuthzReload/icons/blank.gif" alt="[ICO]"></th><th><a href="?C=N;O=D">Name</a></th><th><a href="?C=M;O=A">Last modified</a></th><th><a href="?C=S;O=A">Size</a></th><th><a href="?C=D;O=A">Description</a></th></tr>
-   <tr><th colspan="5"><hr></th></tr>
-<tr><td valign="top"><img src="/AuthzReload/icons/back.gif" alt="[PARENTDIR]"></td><td><a href="/AuthzReload/">Parent Directory</a></td><td>&nbsp;</td><td align="right">  - </td><td>&nbsp;</td></tr>
-<tr><td valign="top"><img src="/AuthzReload/icons/unknown.gif" alt="[   ]"></td><td><a href="/AuthzReload/cogs/counting.py">counting.py</a></td><td align="right">2024-09-1 09:55  </td><td align="right"> 4K</td><td>&nbsp;</td></tr>
-<tr><td valign="top"><img src="/AuthzReload/icons/unknown.gif" alt="[   ]"></td><td><a href="/AuthzReload/cogs/automod.py">automod.py</a></td><td align="right">2024-09-7 06:03  </td><td align="right"> 4K</td><td>&nbsp;</td></tr>
-<tr><td valign="top"><img src="/AuthzReload/icons/unknown.gif" alt="[   ]"></td><td><a href="/AuthzReload/cogs/avater.py">avater.py</a></td><td align="right">2024-09-7 06:03  </td><td align="right"> 3K</td><td>&nbsp;</td></tr>
-<tr><td valign="top"><img src="/AuthzReload/icons/unknown.gif" alt="[   ]"></td><td><a href="/AuthzReload/cogs/reactrole.py">reactrole.py</a></td><td align="right">2024-09-7 06:03  </td><td align="right"> 5K</td><td>&nbsp;</td></tr>
-<tr><td valign="top"><img src="/AuthzReload/icons/unknown.gif" alt="[   ]"></td><td><a href="/AuthzReload/cogs/serverinfo.py">serverinfo.py</a></td><td align="right">2024-09-7 06:03  </td><td align="right"> 2K</td><td>&nbsp;</td></tr>   
-   <tr><th colspan="5"><hr></th></tr>
-</table>
-<address>Apache/2.4.52 (Ubuntu) Server at tasfinthebigboy.github.io/AuthzReload Port 443</address>
-</body></html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index of /cogs</title>
+    <style>
+        /* Default Light Mode Styles */
+        body {
+            background-color: #fff;
+            color: #000;
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        hr {
+            border: 1px solid #ddd;
+        }
+
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        body.dark-mode th {
+            background-color: #333;
+        }
+
+        /* Button Styles */
+        .toggle-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .toggle-btn.dark-mode {
+            background-color: #444;
+        }
+    </style>
+</head>
+<body>
+    <button class="toggle-btn" id="toggleBtn">Toggle Dark Mode</button>
+
+    <h1>Index of /cogs</h1>
+    <table id="fileTable">
+        <thead>
+            <tr>
+                <th valign="top">Icon</th>
+                <th><a id="nameCol">Name</a></th>
+                <th><a id="dateCol">Last modified</a></th>
+                <th><a id="sizeCol">Size</a></th>
+                <th>Description</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td valign="top"><img src="/AuthzReload/icons/back.gif" alt="[PARENTDIR]"></td>
+                <td><a href="/AuthzReload/">Parent Directory</a></td>
+                <td>&nbsp;</td>
+                <td align="right">-</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td valign="top"><img src="/AuthzReload/icons/unknown.gif" alt="[   ]"></td>
+                <td><a href="/AuthzReload/cogs/counting.py">counting.py</a></td>
+                <td>2024-09-01 09:55</td>
+                <td align="right">4K</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td valign="top"><img src="/AuthzReload/icons/unknown.gif" alt="[   ]"></td>
+                <td><a href="/AuthzReload/cogs/automod.py">automod.py</a></td>
+                <td>2024-09-07 06:03</td>
+                <td align="right">4K</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td valign="top"><img src="/AuthzReload/icons/unknown.gif" alt="[   ]"></td>
+                <td><a href="/AuthzReload/cogs/avatar.py">avatar.py</a></td>
+                <td>2024-09-07 06:03</td>
+                <td align="right">3K</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <td valign="top"><img src="/AuthzReload/icons/unknown.gif" alt="[   ]"></td>
+                <td><a href="/AuthzReload/cogs/reactrole.py">reactrole.py</a></td>
+                <td>2024-09-07 06:03</td>
+                <td align="right">5K</td>
+                <td>&nbsp;</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        // Dark/Light Mode Toggle
+        const toggleBtn = document.getElementById('toggleBtn');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+
+        document.body.classList.toggle('dark-mode', currentTheme === 'dark');
+
+        toggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const theme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+        });
+
+        // Sorting Logic
+        const table = document.getElementById("fileTable").getElementsByTagName('tbody')[0];
+        let ascending = true;
+
+        function sortTable(index, isNumeric) {
+            const rows = Array.from(table.rows);
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.cells[index].innerText.toLowerCase();
+                const cellB = rowB.cells[index].innerText.toLowerCase();
+                if (isNumeric) {
+                    return ascending ? parseFloat(cellA) - parseFloat(cellB) : parseFloat(cellB) - parseFloat(cellA);
+                }
+                return ascending ? (cellA > cellB ? 1 : -1) : (cellA < cellB ? 1 : -1);
+            });
+
+            rows.forEach(row => table.appendChild(row));
+            ascending = !ascending;
+        }
+
+        document.getElementById('nameCol').addEventListener('click', () => sortTable(1, false));
+        document.getElementById('dateCol').addEventListener('click', () => sortTable(2, false));
+        document.getElementById('sizeCol').addEventListener('click', () => sortTable(3, true));
+    </script>
+</body>
+</html>
