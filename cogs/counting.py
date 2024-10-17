@@ -6,10 +6,10 @@ import aiosqlite
 
 # Auto-moderation regex patterns
 prohibited_words_pattern = re.compile(
-    r'\b(shit|piss|fuck|cunt|cocksucker|motherfucker|tits)\b', re.IGNORECASE
+    r'\b(bad|words)\b', re.IGNORECASE
 )
 profanity_pattern = re.compile(
-    r'\b(bitch|asshole|dick|slut|nigger|whore|fag|faggot|cocks|cum)\b', re.IGNORECASE
+    r'\b(bad|words)\b', re.IGNORECASE
 )
 link_pattern = re.compile(r'http[s]?://\S+', re.IGNORECASE)
 caps_lock_pattern = re.compile(r'[A-Z]{2,}', re.IGNORECASE)
