@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.ui import *
 from api import Token
 import aiosqlite
 import aiohttp
@@ -109,9 +108,9 @@ async def update_presence_loop():
         await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.streaming, name=f"with {total_members} members", url="https://twitch.tv/discord"))
         await asyncio.sleep(10)
 
-        # Second activity: watching total channel count
+        # Third activity: watching total channel count
         total_channels = sum(len(guild.channels) for guild in bot.guilds)
-        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.streaming, name=f"with {total_members} channels", url="https://twitch.tv/discord"))
+        await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.streaming, name=f"with {total_channels} channels", url="https://twitch.tv/discord"))
         await asyncio.sleep(10)
 
 @bot.event
@@ -282,8 +281,8 @@ async def unmute(interaction: discord.Interaction, member: discord.Member):
     )
     embed.set_footer(text=f"Unmuted by {interaction.user}", icon_url=interaction.user.avatar.url)
 
-    await interaction.response.send_message(embed=embed)
-
+    await interaction.response.send_message(embed=embed)    
+    
 @bot.tree.command(name="warn", description="Warns a user in the server")
 @discord.app_commands.default_permissions(manage_messages=True)
 @discord.app_commands.describe(member="Member to warn", reason="Reason for the warning")
@@ -322,7 +321,8 @@ class HelpSelect(discord.ui.Select):
                 "unban": "Unbans a user from the server. Usage: /unban User#1234",
                 "setup_automod": "Sets up automod for your guild. Usage: /setup_automod #alert-channel",
                 "setup_welcome": "Sets up the welcome channel. Usage: /setup_welcome #channel",
-                "setup_leave": "Sets up the leave channel. Usage: /setup_leave #channel"
+                "setup_leave": "Sets up the leave channel. Usage: /setup_leave #channel",
+                "setup_autorole": "Gives the member a joining role. Usage: /setup_leave @role"
             }
             for cmd, desc in admin_commands.items():
                 embed.add_field(name=cmd, value=desc, inline=False)
@@ -343,7 +343,9 @@ class HelpSelect(discord.ui.Select):
             member_commands = {
                 "help": "Shows all commands usage. Usage: /help",
                 "customembed": "Make your custom embed. Usage: /customembed <title> <description>",
-                "ping": "Shows the bot's response time"
+                "ping": "Shows the bot's response time",
+                "avater":"Shows a user's avatar. Usage: /avater [user] [hide-reply]",
+                "serverinfo":"Shows the server information. Usage: /serverinfo"
             }
             for cmd, desc in member_commands.items():
                 embed.add_field(name=cmd, value=desc, inline=False)
@@ -356,41 +358,13 @@ class HelpView(discord.ui.View):
         self.add_item(HelpSelect())
 
 @bot.tree.command(name="help", description="Shows all commands usage")
-@discord.app_commands.describe(command="Get detailed information about a specific command")
-async def help_command(interaction: discord.Interaction, command: str = None):
-    if command:
-        embed = discord.Embed(title=f"Help: {command}", color=0x00ff00)
-        command_info = {
-            "verify": "Sets up a verification system. Usage: /verify @Role",
-            "ban": "Bans a user from the server. Usage: /ban @User [reason]",
-            "unban": "Unbans a user from the server. Usage: /unban User#1234",
-            "setup_automod": "Sets up automod for your guild. Usage: /setup_automod #alert-channel",
-            "setup_welcome": "Sets up the welcome channel. Usage: /setup_welcome #channel",
-            "setup_leave": "Sets up the leave channel. Usage: /setup_leave #channel",
-            "kick": "Kicks a user from the server. Usage: /kick @User [reason]",
-            "mute": "Mutes a user in the server. Usage: /mute @User [reason]",
-            "unmute": "Unmutes a user in the server. Usage: /unmute @User",
-            "warn": "Warns a user in the server. Usage: /warn @User [reason]",
-            "purge": "Purges a user from the server. Usage: /purge [amount]",
-            "warnings": "Shows warnings of a user. Usage: /warnings @User",
-            "help": "Shows all commands usage. Usage: /help",
-            "customembed": "Make your custom oneline embed. Usage: /customembed <title> <description>",
-            "ping": "Shows the bot's response time",
-            "count": "Starts a counting game in the specified channel. Usage: /count channel: #counting\n\n**Counting Rules:**\n1) No skipping numbers\n2) No going back in numbers\n3) Must alternate counters (except for solo mode)\n4) No botting, scripting or abusing bugs\n5) Do not intentionally ruin the count"
-        }
-
-        if command in command_info:
-            embed.description = command_info[command]
-        else:
-            embed.description = "Command not found."
-        
-        await interaction.response.send_message(embed=embed)
-    else:
+async def help_command(interaction: discord.Interaction):
         embed = discord.Embed(color=0x00ff00)
         embed.set_author(name="Authz Reloaded Commands", icon_url=bot.user.avatar)
         embed.add_field(name="**Admin Commands**", value="Select Below")
         embed.add_field(name="**Mod Commands**", value="Select Below")
         embed.add_field(name="**Member Commands**", value="Select Below")
+        embed.set_footer(text="Authz | Made by @tasfinthebigboy")
         await interaction.response.send_message(embed=embed, view=HelpView())
 
 @bot.tree.command(name="customembed", description="Create a custom embed")
@@ -563,15 +537,22 @@ async def on_member_join(member):
         if welcome_channel_id:
             channel = bot.get_channel(welcome_channel_id)
             if channel:
+                # embed = discord.Embed(
+                #     title="🎉 Welcome to the Server!",
+                #     description=f"Hello {member.mention}, we're thrilled to have you at {member.guild.name}",
+                #     color=discord.Color.blue()
+                # )
+                # embed.set_thumbnail(url=member.avatar.url)
+                # embed.add_field(name="Member Count", value=f"{member.guild.member_count}", inline=True)
+                # embed.set_footer(text="Enjoy your stay!")
+                # await channel.send(embed=embed)
                 embed = discord.Embed(
                     title="🎉 Welcome to the Server!",
-                    description=f"Hello {member.mention}, we're thrilled to have you at {member.guild.name}",
+                    description=None,
                     color=discord.Color.blue()
                 )
                 embed.set_thumbnail(url=member.avatar.url)
-                embed.add_field(name="Member Count", value=f"{member.guild.member_count}", inline=True)
-                embed.set_footer(text="Enjoy your stay!")
-                await channel.send(embed=embed)
+                await channel.send(content=f"Hello {member.mention}, we're happy to have you at {member.guild.name} | {member.guild.member_count}", embed=embed)
                 
     except Exception as e:
         print(f"Error occurred while handling member join event: {e}")
@@ -583,15 +564,22 @@ async def on_member_remove(member):
     if leave_channel_id:
         channel = bot.get_channel(leave_channel_id)
         if channel:
+            # embed = discord.Embed(
+            #     title="😢 Goodbye!",
+            #     description=f"{member.name} has left the server.",
+            #     color=discord.Color.orange()
+            # )
+            # embed.set_thumbnail(url=member.avatar.url)
+            # embed.add_field(name="We hope to see you again!", value="Goodbye!", inline=True)
+            # embed.set_footer(text="We'll miss you!")
+            # await channel.send(embed=embed)
             embed = discord.Embed(
                 title="😢 Goodbye!",
-                description=f"{member.name} has left the server.",
-                color=discord.Color.orange()
+                description=None,
+                color=discord.Color.blue()
             )
             embed.set_thumbnail(url=member.avatar.url)
-            embed.add_field(name="We hope to see you again!", value="Goodbye!", inline=True)
-            embed.set_footer(text="We'll miss you!")
-            await channel.send(embed=embed)
+            await channel.send(content=f"{member.name} has left the server.", embed=embed)
 
 # Error handling for setup commands
 @setup_welcome.error
@@ -616,75 +604,9 @@ async def initialize_databases():
         await db.execute("CREATE TABLE IF NOT EXISTS guild_settings (guild_id INTEGER PRIMARY KEY, role_id INTEGER)")
         await db.commit()
 
-# Auto-moderation code integrated into the main bot file
-# Updated regex pattern with bad words and profanities
-prohibited_words_pattern = re.compile(
-    r'\b(shit|piss|fuck|cunt|cocksucker|motherfucker|tits)\b', re.IGNORECASE
-)
-profanity_pattern = re.compile(
-    r'\b(bitch|asshole|dick|slut|nigger|whore|fag|faggot|cocks|cum)\b', re.IGNORECASE
-)
-link_pattern = re.compile(r'http[s]?://\S+', re.IGNORECASE)
-caps_lock_pattern = re.compile(r'[A-Z]{2,}', re.IGNORECASE)
-mention_pattern = re.compile(r'<@!?\d+>', re.IGNORECASE)
-
-spam_count = 5
-max_caps_percentage = 70
-max_mentions = 5
-
-async def check_permissions(member):
-    """Check if the member has Manage Server permission."""
-    return member.guild_permissions.manage_guild
-
-@bot.event
-async def on_message(message):
-    # Ignore bot messages
-    if message.author.bot:
-        return
-
-    # Check if the author has Manage Server permission
-    if await check_permissions(message.author):
-        return
-
-    # Prohibited Words
-    if prohibited_words_pattern.search(message.content):
-        await message.delete()
-        await message.author.send("⚠️ Your message contained a prohibited word and was deleted.")
-        return
-
-    # Profanity Filtering
-    if profanity_pattern.search(message.content):
-        await message.delete()
-        await message.author.send("⚠️ Your message contained profanity and was deleted.")
-        return
-
-    # Link Filtering
-    if link_pattern.search(message.content):
-        # If the link is not in the allowed list (check manually as needed)
-        await message.delete()
-        await message.author.send("⚠️ Your message contained an unapproved link and was deleted.")
-        return
-
-    # Caps Lock Detection
-    caps_percentage = (sum(1 for c in message.content if c.isupper()) / len(message.content)) * 100
-    if caps_percentage > max_caps_percentage:
-        await message.delete()
-        await message.author.send("⚠️ Your message contained too many uppercase letters and was deleted.")
-        return
-
-    # Mention Spam Detection
-    mentions = len(mention_pattern.findall(message.content))
-    if mentions > max_mentions:
-        await message.delete()
-        await message.author.send("⚠️ Your message contained too many mentions and was deleted.")
-        return
-
-    # Ensure other commands can still be processed
-    await bot.process_commands(message)
-
 async def load_cogs():
     # List your cog files here (omit the .py extension)
-    cogs = ["cogs.counting", "cogs.avater", "cogs.automod", "cogs.serverinfo", "cogs.reactrole"]
+    cogs = ["cogs.counting", "cogs.avater", "cogs.automod", "cogs.serverinfo", "cogs.reactrole", "cogs.credits"]
     
     for cog in cogs:
         try:
