@@ -20,7 +20,6 @@ from discord.ext import commands
 from api import Token
 import aiosqlite
 import aiohttp
-import time
 import sys
 import re
 import os
@@ -58,10 +57,6 @@ async def on_ready():
         await initialize_databases()
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} commands")
-        uptime = int(time.time() - start_time)
-        async with aiohttp.ClientSession() as session:
-            await session.get(f'http://127.0.0.1:5000/set_ready/{uptime}')
-            print(f'Bot is ready! Uptime: {uptime} seconds')
     except Exception as e:
         print(f"Error during command sync: {e}")
 
