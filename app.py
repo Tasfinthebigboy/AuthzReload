@@ -6,7 +6,7 @@
 #  -------------###########
 #  -------------###########
 #  #####################---  Made by Tasfinthebigboy (https://github.com/Tasfinthebigboy/AuthzReload/)
-#  #####################---  Version number 3.2
+#  #####################---  Version number 3.1
 #  #####################---  Free to use! This version will be continuously updated.
 #  -------------###########
 #  -------------###########
