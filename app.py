@@ -623,7 +623,7 @@ async def initialize_databases():
 
 async def load_cogs():
     # List your cog files here (omit the .py extension)
-    cogs = ["cogs.counting", "cogs.avater", "cogs.automod", "cogs.serverinfo", "cogs.reactrole", "cogs.credits"]
+    cogs = ["cogs.counting", "cogs.avater", "cogs.automod", "cogs.serverinfo", "cogs.reactrole", "cogs.credits", "cogs.meme"]
     
     for cog in cogs:
         try:
