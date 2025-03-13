@@ -65,8 +65,15 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                const code = await response.text();
-                document.getElementById("code-content").innerText = code;
+                let code = await response.text();
+                
+                // Syntax highlighting
+                code = code
+                    .replace(/(\bimport\b|\bfrom\b|\bdef\b|\bclass\b|\basync\b|\bawait\b|\breturn\b)/g, '<span class="color-keyword">$1</span>')
+                    .replace(/("[^"]*"|'[^']*')/g, '<span class="color-string">$1</span>')
+                    .replace(/(#.*$)/gm, '<span class="color-comment">$1</span>');
+                
+                document.getElementById("code-content").innerHTML = code;
             } catch (error) {
                 console.error("Error loading Python code:", error);
                 document.getElementById("code-content").innerText = "Failed to load code.";
