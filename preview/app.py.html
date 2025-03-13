@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Screen Code Editor - Python</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #1e1e1e;
+            color: white;
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .code-editor {
+            width: 100vw;
+            height: 100vh;
+            background-color: #282c34;
+            box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 0px;
+            padding: 20px;
+            overflow: auto;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3e4451;
+        }
+        .title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #61dafb;
+        }
+        .icon {
+            width: 24px;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+        .icon:hover {
+            background-color: #ff5f56;
+            border-radius: 50px;
+        }
+        .editor-content {
+            padding-top: 10px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.4;
+            color: white;
+        }
+    </style>
+    <script>
+        async function loadPythonCode() {
+            try {
+                const response = await fetch("https://authz.bot.nu/app.py"); // Replace with actual URL
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const code = await response.text();
+                document.getElementById("code-content").innerText = code;
+            } catch (error) {
+                console.error("Error loading Python code:", error);
+                document.getElementById("code-content").innerText = "Failed to load code.";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadPythonCode);
+    </script>
+</head>
+<body>
+    <div class="code-editor">
+        <div class="header">
+            <span class="title">Python</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="icon" onclick="window.close()">
+                <g> <circle cx="12" cy="12" r="10" fill="#ff5f56"/></g>
+            </svg>
+        </div>
+        <div class="editor-content">
+            <pre><code id="code-content"></code></pre>
+        </div>
+    </div>
+</body>
+</html>
