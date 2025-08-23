@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Az Authz - Discord Bot</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const counters = document.querySelectorAll(".counter");
+    const speed = 120; // smaller = faster
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const counter = entry.target;
+          const updateCount = () => {
+            const target = +counter.getAttribute("data-target");
+            const count = +counter.innerText;
+
+            const increment = Math.ceil(target / speed);
+
+            if (count < target) {
+              counter.innerText = count + increment;
+              setTimeout(updateCount, 40);
+            } else {
+              counter.innerText = target;
+            }
+          };
+
+          updateCount();
+          observer.unobserve(counter); // run only once
+        }
+      });
+    }, { threshold: 0.5 });
+
+    counters.forEach(counter => observer.observe(counter));
+  });
+</script>
+</head>
+<body class="bg-gray-950 text-gray-200 font-sans">
+<!-- Navbar -->
+<nav id="navbar" class="fixed w-full z-50 transition-all duration-500 bg-transparent">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-center md:justify-between">
+    
+    <!-- Logo -->
+    <h1 id="logo" class="text-2xl font-bold text-white transition-colors duration-500 mb-3 md:mb-0">Az Authz</h1>
+
+    <!-- Links -->
+    <div id="nav-links" class="flex flex-wrap justify-center items-center gap-6">
+      <a href="#features" class="text-white hover:text-indigo-400 transition">Features</a>
+      <a href="#stats" class="text-white hover:text-indigo-400 transition">Stats</a>
+      <a href="/pages/commands.html" class="text-white hover:text-indigo-400 transition">Commands</a>
+      <a href="/pages/tos.html" class="text-white hover:text-indigo-400 transition">ToS</a>
+      <a href="#invite" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">Invite</a>
+    </div>
+
+  </div>
+</nav>
+
+
+
+<script>
+const navbar = document.getElementById('navbar');
+const logo = document.getElementById('logo');
+const links = document.getElementById('nav-links');
+
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 10) {
+    navbar.classList.add('bg-gray-900/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+    logo.classList.remove('text-white');
+    logo.classList.add('text-indigo-400');
+    links.querySelectorAll('a').forEach(a => {
+      if (!a.classList.contains('bg-indigo-600')) {
+        a.classList.remove('text-white');
+        a.classList.add('text-gray-200');
+      }
+    });
+  } else {
+    navbar.classList.remove('bg-gray-900/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+    logo.classList.remove('text-indigo-400');
+    logo.classList.add('text-white');
+    links.querySelectorAll('a').forEach(a => {
+      if (!a.classList.contains('bg-indigo-600')) {
+        a.classList.remove('text-gray-200');
+        a.classList.add('text-white');
+      }
+    });
+  }
+});
+</script>
+
+
+  <!-- Hero -->
+  <section class="pt-36 pb-40 text-center bg-gradient-to-r from-indigo-800 to-purple-800">
+    <h2 class="text-5xl font-extrabold mb-4">Az Authz 🤖</h2>
+    <p class="text-lg mb-6 max-w-2xl mx-auto text-gray-300">
+      Secure, powerful, and easy-to-use authorization bot for Discord.  
+      Manage access, automate permissions, and keep your server safe.
+    </p>
+    <a href="#invite" class="bg-white text-indigo-700 px-6 py-3 rounded-full font-semibold hover:bg-gray-200 transition">Invite Now</a>
+  </section>
+
+
+<!-- Features Section -->
+<section id="features" class="max-w-6xl mx-auto px-6 py-24 text-center">
+
+  <h3 class="text-4xl font-bold mb-16 text-indigo-400">✨ Features</h3>
+
+  <!-- Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+
+    <!-- Automod -->
+    <div class="bg-gray-900 p-10 rounded-2xl shadow-md hover:shadow-xl transition">
+      <span class="inline-block px-3 py-1 text-xs font-semibold bg-gray-800 rounded-md text-gray-300 mb-3">
+        AUTOMOD
+      </span>
+      <h3 class="text-3xl font-bold mb-4">⚡ Keep Your Server Safe</h3>
+      <p class="text-gray-400">
+        Automatically detect spam, block unwanted links, filter bad words, and enforce rules without 
+        needing manual moderation.
+      </p>
+    </div>
+
+    <!-- Music -->
+    <div class="bg-gray-900 p-10 rounded-2xl shadow-md hover:shadow-xl transition">
+      <span class="inline-block px-3 py-1 text-xs font-semibold bg-gray-800 rounded-md text-gray-300 mb-3">
+        MUSIC
+      </span>
+      <h3 class="text-3xl font-bold mb-4">🎵 Enjoy Music Together</h3>
+      <p class="text-gray-400">
+        Play high-quality music in your voice channels with simple commands. Supports YouTube, Spotify, and more.
+      </p>
+    </div>
+
+    <!-- Moderation -->
+    <div class="bg-gray-900 p-10 rounded-2xl shadow-md hover:shadow-xl transition">
+      <span class="inline-block px-3 py-1 text-xs font-semibold bg-gray-800 rounded-md text-gray-300 mb-3">
+        MODERATION
+      </span>
+      <h3 class="text-3xl font-bold mb-4">🛡️ Powerful Moderation Tools</h3>
+      <p class="text-gray-400">
+        Kick, ban, mute, and warn users instantly with easy-to-use commands. Automate punishments based on warnings.
+      </p>
+    </div>
+
+    <!-- Fun -->
+    <div class="bg-gray-900 p-10 rounded-2xl shadow-md hover:shadow-xl transition">
+      <span class="inline-block px-3 py-1 text-xs font-semibold bg-gray-800 rounded-md text-gray-300 mb-3">
+        FUN
+      </span>
+      <h3 class="text-3xl font-bold mb-4">🎲 Fun & Interactive Commands</h3>
+      <p class="text-gray-400">
+        Spice up your server with fun games, jokes, memes, and interactive commands to keep members entertained.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+
+
+  <!-- Stats -->
+  <section id="stats" class="bg-gray-900 py-24">
+    <h3 class="text-3xl font-bold text-center mb-14">📊 Bot Stats</h3>
+    <div class="max-w-5xl mx-auto grid md:grid-cols-3 gap-10 text-center">
+      <div class="bg-gray-950 p-10 rounded-2xl shadow-lg hover:scale-105 transition">
+        <h4 class="text-4xl font-bold text-indigo-400 counter" data-target="55">0</h4>
+        <p class="mt-2 text-gray-400">Servers</p>
+      </div>
+      <div class="bg-gray-950 p-10 rounded-2xl shadow-lg hover:scale-105 transition">
+        <h4 class="text-4xl font-bold text-indigo-400 counter" data-target="3328">0</h4>
+        <p class="mt-2 text-gray-400">Users</p>
+      </div>
+      <div class="bg-gray-950 p-10 rounded-2xl shadow-lg hover:scale-105 transition">
+        <h4 class="text-4xl font-bold text-indigo-400">99.9%</h4>
+        <p class="mt-2 text-gray-400">Uptime</p>
+      </div>
+    </div>
+  </section>
+
+<!-- FAQ Section -->
+<section id="faq" class="max-w-4xl mx-auto px-6 py-24">
+  <h3 class="text-4xl font-bold text-center mb-16 text-indigo-400"> Frequently Asked Questions</h3>
+
+  <div class="space-y-6">
+
+    <!-- Q1 -->
+    <div class="group border border-gray-700 rounded-xl p-5 bg-gray-900">
+      <button class="flex justify-between items-center w-full text-left">
+        <span class="text-lg font-semibold">Is the bot free to use?</span>
+        <span class="text-xl text-indigo-400 transition-transform group-open:rotate-45">+</span>
+      </button>
+      <div class="hidden mt-3 text-gray-400 group-[.open]:block">
+        Yes! The bot is completely free to use. Some premium features may be added in the future.
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="group border border-gray-700 rounded-xl p-5 bg-gray-900">
+      <button class="flex justify-between items-center w-full text-left">
+        <span class="text-lg font-semibold">How do I add the bot to my server?</span>
+        <span class="text-xl text-indigo-400 transition-transform group-open:rotate-45">+</span>
+      </button>
+      <div class="hidden mt-3 text-gray-400 group-[.open]:block">
+        You can invite the bot by clicking the invite link and granting it the required permissions.
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="group border border-gray-700 rounded-xl p-5 bg-gray-900">
+      <button class="flex justify-between items-center w-full text-left">
+        <span class="text-lg font-semibold">Can I customize the automod filters?</span>
+        <span class="text-xl text-indigo-400 transition-transform group-open:rotate-45">+</span>
+      </button>
+      <div class="hidden mt-3 text-gray-400 group-[.open]:block">
+        Yes, you can fully configure word filters, spam protection, link blocking, and more.
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="group border border-gray-700 rounded-xl p-5 bg-gray-900">
+      <button class="flex justify-between items-center w-full text-left">
+        <span class="text-lg font-semibold">What music platforms are supported?</span>
+        <span class="text-xl text-indigo-400 transition-transform group-open:rotate-45">+</span>
+      </button>
+      <div class="hidden mt-3 text-gray-400 group-[.open]:block">
+        The bot currently supports <strong>YouTube Music</strong> with high-quality playback.
+      </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="group border border-gray-700 rounded-xl p-5 bg-gray-900">
+      <button class="flex justify-between items-center w-full text-left">
+        <span class="text-lg font-semibold">Can I suggest new features or commands?</span>
+        <span class="text-xl text-indigo-400 transition-transform group-open:rotate-45">+</span>
+      </button>
+      <div class="hidden mt-3 text-gray-400 group-[.open]:block">
+        Absolutely! You can suggest features on our support server or feedback form.
+      </div>
+    </div>
+
+    <!-- Q6 -->
+    <div class="group border border-gray-700 rounded-xl p-5 bg-gray-900">
+      <button class="flex justify-between items-center w-full text-left">
+        <span class="text-lg font-semibold">What features are included in premium?</span>
+        <span class="text-xl text-indigo-400 transition-transform group-open:rotate-45">+</span>
+      </button>
+      <div class="hidden mt-3 text-gray-400 group-[.open]:block">
+        Premium is not released yet, but stay tuned for upcoming exclusive features!
+      </div>
+    </div>
+
+    <!-- Q7 -->
+    <div class="group border border-gray-700 rounded-xl p-5 bg-gray-900">
+      <button class="flex justify-between items-center w-full text-left">
+        <span class="text-lg font-semibold">The bot isn’t responding — what should I do?</span>
+        <span class="text-xl text-indigo-400 transition-transform group-open:rotate-45">+</span>
+      </button>
+      <div class="hidden mt-3 text-gray-400 group-[.open]:block">
+        First, check if the bot is online. If it is, make sure it has the right permissions and roles. If the issue continues, reach out to our support team.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  // Simple accordion toggle
+  document.querySelectorAll("#faq .group button").forEach(button => {
+    button.addEventListener("click", () => {
+      const group = button.parentElement;
+      group.classList.toggle("open");
+      const answer = group.querySelector("div");
+      answer.classList.toggle("hidden");
+    });
+  });
+</script>
+
+
+
+  <!-- Invite -->
+  <section id="invite" class="text-center py-24">
+    <h3 class="text-3xl font-bold mb-8">🚀 Ready to secure your server?</h3>
+    <a href="https://discord.com/oauth2/authorize?client_id=1254820362600845382&scope=bot" 
+       class="bg-indigo-600 px-10 py-4 rounded-full font-semibold text-white hover:bg-indigo-700 transition shadow-lg">
+       Invite Az Authz
+    </a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-950 border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-3 gap-10">
+      <div>
+        <h2 class="text-2xl font-bold text-indigo-400">Az Authz</h2>
+        <p class="mt-3 text-gray-400">
+          Powerful Discord bot for access control, automation, and server security.
+        </p>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold text-gray-300 mb-4">Quick Links</h3>
+        <ul class="space-y-2">
+          <li><a href="/#features" class="hover:text-indigo-400 transition">Features</a></li>
+          <li><a href="/#stats" class="hover:text-indigo-400 transition">Stats</a></li>
+          <li><a href="/#invite" class="hover:text-indigo-400 transition">Invite</a></li>
+        </ul>
+      </div>
+    <div>
+      <h3 class="text-lg font-semibold text-gray-300 mb-4">Connect</h3>
+      <div class="flex space-x-4">
+        <a href="https://discord.gg/t96vesj5Sx" class="text-gray-400 hover:text-indigo-400 transition text-2xl">
+          <i class="fab fa-discord"></i>
+        </a>
+        <a href="https://github.com/Tasfinthebigboy" class="text-gray-400 hover:text-indigo-400 transition text-2xl">
+          <i class="fab fa-github"></i>
+        </a>
+      </div>
+    </div>
+
+    </div>
+    <div class="border-t border-gray-800 mt-6 py-4 text-center text-gray-500 text-sm">
+      &copy; 2025 Az Authz. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+  // Smooth scroll with navbar offset
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href');
+      const target = document.querySelector(targetId);
+
+      if (target) {
+        const navbarHeight = document.getElementById('navbar').offsetHeight;
+        const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
+
+        window.scrollTo({
+          top: targetPosition,
+          behavior: "smooth"
+        });
+      }
+    });
+  });
+</script>
+<script>
+(function() {
+  const isDesktop = () => window.innerWidth > 54; // ignore mobile/tablet
+
+  const detectDevTools = () => {
+    if (!isDesktop()) return false; // don't trigger on mobile
+    const threshold = 160; // min DevTools size
+    const widthDiff = window.outerWidth - window.innerWidth > threshold;
+    const heightDiff = window.outerHeight - window.innerHeight > threshold;
+    return widthDiff || heightDiff;
+  };
+
+  const blockPage = () => {
+    document.body.innerHTML = ''; // clear page
+    document.body.style.background = '#111';
+    document.body.style.display = 'flex';
+    document.body.style.justifyContent = 'center';
+    document.body.style.alignItems = 'center';
+    document.body.style.height = '100vh';
+    document.body.style.margin = '0';
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity 0.8s ease-in-out';
+
+    const h1 = document.createElement('h1');
+    h1.innerText = 'DEVTOOLS NOT ALLOWED';
+    h1.style.color = 'red';
+    h1.style.fontSize = '4rem';
+    h1.style.fontFamily = 'sans-serif';
+    h1.style.textAlign = 'center';
+
+    document.body.appendChild(h1);
+
+    // fade in
+    requestAnimationFrame(() => {
+      document.body.style.opacity = '1';
+    });
+  };
+
+  setInterval(() => {
+    if (detectDevTools()) {
+      blockPage();
+    }
+  }, 500);
+})();
+</script>
+
+
+
+
+</body>
+</html>

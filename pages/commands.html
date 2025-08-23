@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Az Authz - Discord Bot</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-200 font-sans">
+<!-- Navbar -->
+<nav id="navbar" class="fixed w-full z-50 transition-all duration-500 bg-transparent">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-center md:justify-between">
+    
+    <!-- Logo -->
+    <h1 id="logo" class="text-2xl font-bold text-white transition-colors duration-500 mb-3 md:mb-0">Az Authz</h1>
+
+    <!-- Links -->
+    <div id="nav-links" class="flex flex-wrap justify-center items-center gap-6">
+      <a href="/" class="text-white hover:text-indigo-400 transition">Home</a>
+      <a href="#invite" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">Invite</a>
+    </div>
+
+  </div>
+</nav>
+
+
+
+<script>
+const navbar = document.getElementById('navbar');
+const logo = document.getElementById('logo');
+const links = document.getElementById('nav-links');
+
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 50) {
+    navbar.classList.add('bg-gray-900/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+    logo.classList.remove('text-white');
+    logo.classList.add('text-indigo-400');
+    links.querySelectorAll('a').forEach(a => {
+      if (!a.classList.contains('bg-indigo-600')) {
+        a.classList.remove('text-white');
+        a.classList.add('text-gray-200');
+      }
+    });
+  } else {
+    navbar.classList.remove('bg-gray-900/80', 'backdrop-blur-md', 'border-b', 'border-gray-800');
+    logo.classList.remove('text-indigo-400');
+    logo.classList.add('text-white');
+    links.querySelectorAll('a').forEach(a => {
+      if (!a.classList.contains('bg-indigo-600')) {
+        a.classList.remove('text-gray-200');
+        a.classList.add('text-white');
+      }
+    });
+  }
+});
+</script>
+
+
+<!-- Hero -->
+<section class="pt-32 pb-16 text-center bg-gradient-to-r from-indigo-800 to-purple-800">
+  <h2 class="text-5xl font-extrabold mb-4 text-white">Bot Commands 🤖</h2>
+  <p class="text-lg text-gray-200 max-w-2xl mx-auto">
+    Browse all commands Az Authz provides for moderation, fun, and utility.
+  </p>
+</section>
+
+<div class="max-w-7xl mx-auto px-6 py-24 flex flex-col md:flex-row gap-10">
+
+<!-- Right side: Categories -->
+<div class="md:w-1/4 flex md:flex-col justify-center md:justify-start gap-4">
+  <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition active w-full md:w-auto font-semibold">
+    Moderation
+  </button>
+  <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition w-full md:w-auto font-semibold">
+    Fun
+  </button>
+  <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition w-full md:w-auto font-semibold">
+    Utility
+  </button>
+  <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition w-full md:w-auto font-semibold">
+    Music
+  </button>
+</div>
+
+
+  <!-- Left side: Commands -->
+  <div class="md:w-3/4 space-y-4" id="commands-list">
+    <!-- Commands will be injected here -->
+  </div>
+
+</div>
+
+<script>
+const commands = [
+  {name:"ping", desc:"Check the bot's latency.", category:"Fun"},
+  {name:"ban", desc:"Ban a user from the server.", category:"Moderation", premium:false},
+  {name:"kick", desc:"Kick a user from the server.", category:"Moderation"},
+  {name:"unban", desc:"Unban a user.", category:"Moderation"},
+  {name:"purge", desc:"Delete multiple messages.", category:"Moderation", premium:false},
+  {name:"unlock", desc:"Unlock a channel.", category:"Moderation", premium:false},
+  {name:"warn", desc:"Warn a member.", category:"Moderation"},
+  {name:"warnings", desc:"Check warnings of a member.", category:"Moderation"},
+  {name:"delwarns", desc:"Delete warnings of a member.", category:"Moderation"},
+  {name:"mute", desc:"Mute a member.", category:"Moderation", premium:false},
+  {name:"unmute", desc:"Unmute a member.", category:"Moderation", premium:false},
+  {name:"userinfo", desc:"Get info about a user.", category:"Utility"},
+  {name:"roleinfo", desc:"Get info about a role.", category:"Utility"},
+  {name:"serverinfo", desc:"Get info about the server.", category:"Utility"},
+  {name:"channelinfo", desc:"Get info about a channel.", category:"Utility"},
+  {name:"say", desc:"Make the bot say something.", category:"Utility"},
+  {name:"createinvite", desc:"Create an instant invite link.", category:"Utility"},
+  {name:"avatar", desc:"Show user avatar.", category:"Utility"},
+  {name:"help", desc:"Show help menu.", category:"Utility"},
+  {name:"automod", desc:"Configure automod settings.", category:"Utility"},
+  {name:"version", desc:"Show bot version.", category:"Utility"},
+  {name:"8ball", desc:"Magic 8-Ball game.", category:"Fun"},
+  {name:"meme", desc:"Get a random meme.", category:"Fun"},
+  {name:"coinflip", desc:"Flip a coin.", category:"Fun"},
+  {name:"roll", desc:"Roll a dice.", category:"Fun"},
+  {name:"rate", desc:"Rate something.", category:"Fun"},
+  {name:"joke", desc:"Get a random joke.", category:"Fun"},
+  {name:"roast", desc:"Roast someone.", category:"Fun"},
+  {name:"join", desc:"Join your voice channel.", category:"Music"},
+  {name:"summon", desc:"Summon the bot.", category:"Music"},
+  {name:"leave", desc:"Leave the voice channel.", category:"Music"},
+  {name:"volume", desc:"Change volume.", category:"Music"},
+  {name:"now", desc:"Show current song.", category:"Music"},
+  {name:"pause", desc:"Pause the music.", category:"Music"},
+  {name:"resume", desc:"Resume the music.", category:"Music"},
+  {name:"stop", desc:"Stop playing music.", category:"Music"},
+  {name:"skip", desc:"Skip current song.", category:"Music"},
+  {name:"queue", desc:"Show music queue.", category:"Music"},
+  {name:"shuffle", desc:"Shuffle queue.", category:"Music"},
+  {name:"remove", desc:"Remove song from queue.", category:"Music"},
+  {name:"loop", desc:"Loop current song.", category:"Music"},
+  {name:"play", desc:"Play a song.", category:"Music"}
+];
+
+const commandsList = document.getElementById("commands-list");
+
+// Function to render commands
+function renderCommands(category) {
+  commandsList.innerHTML = "";
+  commands.filter(cmd => cmd.category.toLowerCase() === category.toLowerCase())
+          .forEach(cmd => {
+            const div = document.createElement("div");
+            div.className = "command-card " + (cmd.premium ? "premium bg-gray-900 p-4 rounded-lg shadow-md hover:shadow-xl transition" : "bg-gray-900 p-4 rounded-lg shadow-md hover:shadow-xl transition");
+            div.innerHTML = `<strong>/${cmd.name}</strong> - ${cmd.desc}`;
+            commandsList.appendChild(div);
+          });
+}
+
+// Initialize with Moderation commands
+renderCommands("Moderation");
+
+// Category buttons
+document.querySelectorAll(".category-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".category-btn").forEach(b => b.classList.remove("bg-indigo-600", "active"));
+    btn.classList.add("bg-indigo-600", "active");
+    renderCommands(btn.innerText);
+  });
+});
+</script>
+  <!-- Invite -->
+  <section id="invite" class="text-center py-24">
+    <h3 class="text-3xl font-bold mb-8">🚀 Ready to secure your server?</h3>
+    <a href="https://discord.com/oauth2/authorize?client_id=1254820362600845382&scope=bot" 
+       class="bg-indigo-600 px-10 py-4 rounded-full font-semibold text-white hover:bg-indigo-700 transition shadow-lg">
+       Invite Az Authz
+    </a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-950 border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-3 gap-10">
+      <div>
+        <h2 class="text-2xl font-bold text-indigo-400">Az Authz</h2>
+        <p class="mt-3 text-gray-400">
+          Powerful Discord bot for access control, automation, and server security.
+        </p>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold text-gray-300 mb-4">Quick Links</h3>
+        <ul class="space-y-2">
+          <li><a href="/#features" class="hover:text-indigo-400 transition">Features</a></li>
+          <li><a href="/#stats" class="hover:text-indigo-400 transition">Stats</a></li>
+          <li><a href="/#invite" class="hover:text-indigo-400 transition">Invite</a></li>
+        </ul>
+      </div>
+    <div>
+      <h3 class="text-lg font-semibold text-gray-300 mb-4">Connect</h3>
+      <div class="flex space-x-4">
+        <a href="https://discord.gg/t96vesj5Sx" class="text-gray-400 hover:text-indigo-400 transition text-2xl">
+          <i class="fab fa-discord"></i>
+        </a>
+        <a href="https://github.com/Tasfinthebigboy" class="text-gray-400 hover:text-indigo-400 transition text-2xl">
+          <i class="fab fa-github"></i>
+        </a>
+      </div>
+    </div>
+
+    </div>
+    <div class="border-t border-gray-800 mt-6 py-4 text-center text-gray-500 text-sm">
+      &copy; 2025 Az Authz. All rights reserved.
+    </div>
+  </footer>
+
+  <script>
+  // Smooth scroll with navbar offset
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href');
+      const target = document.querySelector(targetId);
+
+      if (target) {
+        const navbarHeight = document.getElementById('navbar').offsetHeight;
+        const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navbarHeight;
+
+        window.scrollTo({
+          top: targetPosition,
+          behavior: "smooth"
+        });
+      }
+    });
+  });
+</script>
+<script>
+(function() {
+  const isDesktop = () => window.innerWidth > 54; // ignore mobile/tablet
+
+  const detectDevTools = () => {
+    if (!isDesktop()) return false; // don't trigger on mobile
+    const threshold = 160; // min DevTools size
+    const widthDiff = window.outerWidth - window.innerWidth > threshold;
+    const heightDiff = window.outerHeight - window.innerHeight > threshold;
+    return widthDiff || heightDiff;
+  };
+
+  const blockPage = () => {
+    document.body.innerHTML = ''; // clear page
+    document.body.style.background = '#111';
+    document.body.style.display = 'flex';
+    document.body.style.justifyContent = 'center';
+    document.body.style.alignItems = 'center';
+    document.body.style.height = '100vh';
+    document.body.style.margin = '0';
+    document.body.style.opacity = '0';
+    document.body.style.transition = 'opacity 0.8s ease-in-out';
+
+    const h1 = document.createElement('h1');
+    h1.innerText = 'DEVTOOLS NOT ALLOWED';
+    h1.style.color = 'red';
+    h1.style.fontSize = '4rem';
+    h1.style.fontFamily = 'sans-serif';
+    h1.style.textAlign = 'center';
+
+    document.body.appendChild(h1);
+
+    // fade in
+    requestAnimationFrame(() => {
+      document.body.style.opacity = '1';
+    });
+  };
+
+  setInterval(() => {
+    if (detectDevTools()) {
+      blockPage();
+    }
+  }, 500);
+})();
+</script>
+<script>
+const buttons = document.querySelectorAll('.category-btn');
+const categories = document.querySelectorAll('.command-category');
+
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.getAttribute('data-target');
+    categories.forEach(cat => {
+      cat.classList.toggle('hidden', cat.getAttribute('data-category') !== target);
+    });
+  });
+});
+</script>
+<style>
+  .premium::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(180deg,#a78bfa,#7c3aed);
+    border-radius: 9999px;
+  }
+  .command-card {
+    position: relative;
+    padding-left: 1rem;
+  }
+</style>
+</body>
+</html>
