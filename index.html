@@ -95,10 +95,10 @@ window.addEventListener('scroll', () => {
 
   <!-- Hero -->
   <section class="pt-36 pb-40 text-center bg-gradient-to-r from-indigo-800 to-purple-800">
-    <h2 class="text-5xl font-extrabold mb-4">Az Authz 🤖</h2>
+    <h2 class="text-5xl font-extrabold mb-4">Az Authz</h2>
     <p class="text-lg mb-6 max-w-2xl mx-auto text-gray-300">
-      Secure, powerful, and easy-to-use authorization bot for Discord.  
-      Manage access, automate permissions, and keep your server safe.
+      Secure, powerful, and easy-to-use Discord authorization bot.
+Take full control of your server with advanced permission management, automated role assignments, and robust security features. Effortlessly manage access, protect your channels, and streamline moderation tasks—all while keeping your server safe and organized.
     </p>
     <a href="#invite" class="bg-white text-indigo-700 px-6 py-3 rounded-full font-semibold hover:bg-gray-200 transition">Invite Now</a>
   </section>
@@ -127,7 +127,7 @@ window.addEventListener('scroll', () => {
     <!-- Music -->
     <div class="bg-gray-900 p-10 rounded-2xl shadow-md hover:shadow-xl transition">
       <span class="inline-block px-3 py-1 text-xs font-semibold bg-gray-800 rounded-md text-gray-300 mb-3">
-        MUSIC
+        MUSIC (Disabled)
       </span>
       <h3 class="text-3xl font-bold mb-4">🎵 Enjoy Music Together</h3>
       <p class="text-gray-400">
@@ -345,54 +345,6 @@ window.addEventListener('scroll', () => {
     });
   });
 </script>
-<script>
-(function() {
-  const isDesktop = () => window.innerWidth > 54; // ignore mobile/tablet
-
-  const detectDevTools = () => {
-    if (!isDesktop()) return false; // don't trigger on mobile
-    const threshold = 160; // min DevTools size
-    const widthDiff = window.outerWidth - window.innerWidth > threshold;
-    const heightDiff = window.outerHeight - window.innerHeight > threshold;
-    return widthDiff || heightDiff;
-  };
-
-  const blockPage = () => {
-    document.body.innerHTML = ''; // clear page
-    document.body.style.background = '#111';
-    document.body.style.display = 'flex';
-    document.body.style.justifyContent = 'center';
-    document.body.style.alignItems = 'center';
-    document.body.style.height = '100vh';
-    document.body.style.margin = '0';
-    document.body.style.opacity = '0';
-    document.body.style.transition = 'opacity 0.8s ease-in-out';
-
-    const h1 = document.createElement('h1');
-    h1.innerText = 'DEVTOOLS NOT ALLOWED';
-    h1.style.color = 'red';
-    h1.style.fontSize = '4rem';
-    h1.style.fontFamily = 'sans-serif';
-    h1.style.textAlign = 'center';
-
-    document.body.appendChild(h1);
-
-    // fade in
-    requestAnimationFrame(() => {
-      document.body.style.opacity = '1';
-    });
-  };
-
-  setInterval(() => {
-    if (detectDevTools()) {
-      blockPage();
-    }
-  }, 500);
-})();
-</script>
-
-
-
 
 </body>
 </html>

@@ -147,51 +147,6 @@
   });
 </script>
 <script>
-(function() {
-  const isDesktop = () => window.innerWidth > 54; // ignore mobile/tablet
-
-  const detectDevTools = () => {
-    if (!isDesktop()) return false; // don't trigger on mobile
-    const threshold = 160; // min DevTools size
-    const widthDiff = window.outerWidth - window.innerWidth > threshold;
-    const heightDiff = window.outerHeight - window.innerHeight > threshold;
-    return widthDiff || heightDiff;
-  };
-
-  const blockPage = () => {
-    document.body.innerHTML = ''; // clear page
-    document.body.style.background = '#111';
-    document.body.style.display = 'flex';
-    document.body.style.justifyContent = 'center';
-    document.body.style.alignItems = 'center';
-    document.body.style.height = '100vh';
-    document.body.style.margin = '0';
-    document.body.style.opacity = '0';
-    document.body.style.transition = 'opacity 0.8s ease-in-out';
-
-    const h1 = document.createElement('h1');
-    h1.innerText = 'DEVTOOLS NOT ALLOWED';
-    h1.style.color = 'red';
-    h1.style.fontSize = '4rem';
-    h1.style.fontFamily = 'sans-serif';
-    h1.style.textAlign = 'center';
-
-    document.body.appendChild(h1);
-
-    // fade in
-    requestAnimationFrame(() => {
-      document.body.style.opacity = '1';
-    });
-  };
-
-  setInterval(() => {
-    if (detectDevTools()) {
-      blockPage();
-    }
-  }, 500);
-})();
-</script>
-<script>
 const buttons = document.querySelectorAll('.category-btn');
 const categories = document.querySelectorAll('.command-category');
 

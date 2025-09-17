@@ -31,3 +31,7 @@
 	/* Microsoft Edge */
 	color: rgb(219, 219, 219);
 }
+
+html{
+	scroll-behavior: smooth;
+}

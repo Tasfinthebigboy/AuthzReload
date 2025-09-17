@@ -60,7 +60,7 @@ window.addEventListener('scroll', () => {
 
 <!-- Hero -->
 <section class="pt-32 pb-16 text-center bg-gradient-to-r from-indigo-800 to-purple-800">
-  <h2 class="text-5xl font-extrabold mb-4 text-white">Bot Commands 🤖</h2>
+  <h2 class="text-5xl font-extrabold mb-4 text-white">Bot Commands</h2>
   <p class="text-lg text-gray-200 max-w-2xl mx-auto">
     Browse all commands Az Authz provides for moderation, fun, and utility.
   </p>
@@ -73,11 +73,17 @@ window.addEventListener('scroll', () => {
   <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition active w-full md:w-auto font-semibold">
     Moderation
   </button>
+  <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition active w-full md:w-auto font-semibold">
+    Automod
+  </button>
   <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition w-full md:w-auto font-semibold">
-    Fun
+    Fun & Entertainment
   </button>
   <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition w-full md:w-auto font-semibold">
     Utility
+  </button>
+  <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition w-full md:w-auto font-semibold">
+    General & Bot Interaction
   </button>
   <button class="category-btn bg-gray-900 text-lg md:text-base px-6 py-3 rounded-lg hover:bg-indigo-600 transition w-full md:w-auto font-semibold">
     Music
@@ -94,48 +100,70 @@ window.addEventListener('scroll', () => {
 
 <script>
 const commands = [
-  {name:"ping", desc:"Check the bot's latency.", category:"Fun"},
-  {name:"ban", desc:"Ban a user from the server.", category:"Moderation", premium:false},
+  // Moderation Commands
+  {name:"ban", desc:"Ban a user from the server.", category:"Moderation"},
   {name:"kick", desc:"Kick a user from the server.", category:"Moderation"},
   {name:"unban", desc:"Unban a user.", category:"Moderation"},
-  {name:"purge", desc:"Delete multiple messages.", category:"Moderation", premium:false},
-  {name:"unlock", desc:"Unlock a channel.", category:"Moderation", premium:false},
+  {name:"purge", desc:"Delete multiple messages.", category:"Moderation"},
+  {name:"mute", desc:"Mute a member.", category:"Moderation"},
+  {name:"unmute", desc:"Unmute a member.", category:"Moderation"},
+  {name:"lock", desc:"Lock a channel.", category:"Moderation"},
+  {name:"unlock", desc:"Unlock a channel.", category:"Moderation"},
   {name:"warn", desc:"Warn a member.", category:"Moderation"},
   {name:"warnings", desc:"Check warnings of a member.", category:"Moderation"},
   {name:"delwarns", desc:"Delete warnings of a member.", category:"Moderation"},
-  {name:"mute", desc:"Mute a member.", category:"Moderation", premium:false},
-  {name:"unmute", desc:"Unmute a member.", category:"Moderation", premium:false},
+
+  // Utility Commands
+  {name:"ping", desc:"Check the bot's latency.", category:"Utility"},
+  {name:"serverinfo", desc:"Get info about the server.", category:"Utility"},
   {name:"userinfo", desc:"Get info about a user.", category:"Utility"},
   {name:"roleinfo", desc:"Get info about a role.", category:"Utility"},
-  {name:"serverinfo", desc:"Get info about the server.", category:"Utility"},
   {name:"channelinfo", desc:"Get info about a channel.", category:"Utility"},
-  {name:"say", desc:"Make the bot say something.", category:"Utility"},
-  {name:"createinvite", desc:"Create an instant invite link.", category:"Utility"},
   {name:"avatar", desc:"Show user avatar.", category:"Utility"},
-  {name:"help", desc:"Show help menu.", category:"Utility"},
-  {name:"automod", desc:"Configure automod settings.", category:"Utility"},
   {name:"version", desc:"Show bot version.", category:"Utility"},
-  {name:"8ball", desc:"Magic 8-Ball game.", category:"Fun"},
-  {name:"meme", desc:"Get a random meme.", category:"Fun"},
-  {name:"coinflip", desc:"Flip a coin.", category:"Fun"},
-  {name:"roll", desc:"Roll a dice.", category:"Fun"},
-  {name:"rate", desc:"Rate something.", category:"Fun"},
-  {name:"joke", desc:"Get a random joke.", category:"Fun"},
-  {name:"roast", desc:"Roast someone.", category:"Fun"},
-  {name:"join", desc:"Join your voice channel.", category:"Music"},
-  {name:"summon", desc:"Summon the bot.", category:"Music"},
-  {name:"leave", desc:"Leave the voice channel.", category:"Music"},
-  {name:"volume", desc:"Change volume.", category:"Music"},
-  {name:"now", desc:"Show current song.", category:"Music"},
-  {name:"pause", desc:"Pause the music.", category:"Music"},
-  {name:"resume", desc:"Resume the music.", category:"Music"},
-  {name:"stop", desc:"Stop playing music.", category:"Music"},
-  {name:"skip", desc:"Skip current song.", category:"Music"},
-  {name:"queue", desc:"Show music queue.", category:"Music"},
-  {name:"shuffle", desc:"Shuffle queue.", category:"Music"},
-  {name:"remove", desc:"Remove song from queue.", category:"Music"},
-  {name:"loop", desc:"Loop current song.", category:"Music"},
-  {name:"play", desc:"Play a song.", category:"Music"}
+  {name:"createinvite", desc:"Create an instant invite link.", category:"Utility"},
+
+  // Automod Commands
+  {name:"automod toggle", desc:"Toggle automod on/off.", category:"Automod"},
+  {name:"automod setlog", desc:"Set automod log channel.", category:"Automod"},
+  {name:"automod mode", desc:"Set automod mode.", category:"Automod"},
+  {name:"automod ignore", desc:"Ignore a user, role, or channel.", category:"Automod"},
+  {name:"automod unignore", desc:"Remove ignore from user, role, or channel.", category:"Automod"},
+  {name:"automod blockwords", desc:"Set blocked words.", category:"Automod"},
+  {name:"automod setlogs", desc:"Set automod logs channel.", category:"Automod"},
+
+  // Fun & Entertainment Commands
+  {name:"8ball", desc:"Magic 8-Ball game.", category:"Fun & Entertainment"},
+  {name:"meme", desc:"Get a random meme.", category:"Fun & Entertainment"},
+  {name:"coinflip", desc:"Flip a coin.", category:"Fun & Entertainment"},
+  {name:"roll", desc:"Roll a dice.", category:"Fun & Entertainment"},
+  {name:"rate", desc:"Rate something.", category:"Fun & Entertainment"},
+  {name:"joke", desc:"Get a random joke.", category:"Fun & Entertainment"},
+  {name:"roast", desc:"Roast someone.", category:"Fun & Entertainment"},
+
+  // General & Bot Interaction
+  {name:"say", desc:"Make the bot say something.", category:"General & Bot Interaction"},
+  {name:"help", desc:"Show help menu.", category:"General & Bot Interaction"},
+  {name:"ai ask", desc:"Ask AI a question.", category:"General & Bot Interaction"},
+  {name:"ai allowchannel", desc:"Allow AI in a channel.", category:"General & Bot Interaction"},
+  {name:"ai removechannel", desc:"Remove AI access from a channel.", category:"General & Bot Interaction"},
+  {name:"createinvite", desc:"Create an instant invite link.", category:"General & Bot Interaction"},
+
+  // Music (Disabled)
+  {name:"join", desc:"Join your voice channel.", category:"Music", disabled: true},
+  {name:"summon", desc:"Summon the bot.", category:"Music", disabled: true},
+  {name:"leave", desc:"Leave the voice channel.", category:"Music", disabled: true},
+  {name:"volume", desc:"Change volume.", category:"Music", disabled: true},
+  {name:"now", desc:"Show current song.", category:"Music", disabled: true},
+  {name:"pause", desc:"Pause the music.", category:"Music", disabled: true},
+  {name:"resume", desc:"Resume the music.", category:"Music", disabled: true},
+  {name:"stop", desc:"Stop playing music.", category:"Music", disabled: true},
+  {name:"skip", desc:"Skip current song.", category:"Music", disabled: true},
+  {name:"queue", desc:"Show music queue.", category:"Music", disabled: true},
+  {name:"shuffle", desc:"Shuffle queue.", category:"Music", disabled: true},
+  {name:"remove", desc:"Remove song from queue.", category:"Music", disabled: true},
+  {name:"loop", desc:"Loop current song.", category:"Music", disabled: true},
+  {name:"play", desc:"Play a song.", category:"Music", disabled: true}
 ];
 
 const commandsList = document.getElementById("commands-list");
@@ -146,7 +174,9 @@ function renderCommands(category) {
   commands.filter(cmd => cmd.category.toLowerCase() === category.toLowerCase())
           .forEach(cmd => {
             const div = document.createElement("div");
-            div.className = "command-card " + (cmd.premium ? "premium bg-gray-900 p-4 rounded-lg shadow-md hover:shadow-xl transition" : "bg-gray-900 p-4 rounded-lg shadow-md hover:shadow-xl transition");
+            div.className = "command-card bg-gray-900 p-4 rounded-lg shadow-md hover:shadow-xl transition";
+            if (cmd.disabled) div.classList.add("disabled");
+            else if (cmd.premium) div.classList.add("premium");
             div.innerHTML = `<strong>/${cmd.name}</strong> - ${cmd.desc}`;
             commandsList.appendChild(div);
           });
@@ -229,51 +259,6 @@ document.querySelectorAll(".category-btn").forEach(btn => {
   });
 </script>
 <script>
-(function() {
-  const isDesktop = () => window.innerWidth > 54; // ignore mobile/tablet
-
-  const detectDevTools = () => {
-    if (!isDesktop()) return false; // don't trigger on mobile
-    const threshold = 160; // min DevTools size
-    const widthDiff = window.outerWidth - window.innerWidth > threshold;
-    const heightDiff = window.outerHeight - window.innerHeight > threshold;
-    return widthDiff || heightDiff;
-  };
-
-  const blockPage = () => {
-    document.body.innerHTML = ''; // clear page
-    document.body.style.background = '#111';
-    document.body.style.display = 'flex';
-    document.body.style.justifyContent = 'center';
-    document.body.style.alignItems = 'center';
-    document.body.style.height = '100vh';
-    document.body.style.margin = '0';
-    document.body.style.opacity = '0';
-    document.body.style.transition = 'opacity 0.8s ease-in-out';
-
-    const h1 = document.createElement('h1');
-    h1.innerText = 'DEVTOOLS NOT ALLOWED';
-    h1.style.color = 'red';
-    h1.style.fontSize = '4rem';
-    h1.style.fontFamily = 'sans-serif';
-    h1.style.textAlign = 'center';
-
-    document.body.appendChild(h1);
-
-    // fade in
-    requestAnimationFrame(() => {
-      document.body.style.opacity = '1';
-    });
-  };
-
-  setInterval(() => {
-    if (detectDevTools()) {
-      blockPage();
-    }
-  }, 500);
-})();
-</script>
-<script>
 const buttons = document.querySelectorAll('.category-btn');
 const categories = document.querySelectorAll('.command-category');
 
@@ -295,6 +280,16 @@ buttons.forEach(btn => {
     width: 5px;
     height: 100%;
     background: linear-gradient(180deg,#a78bfa,#7c3aed);
+    border-radius: 9999px;
+  }
+  .disabled::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(180deg,#fa8b96,#ed3a3a);
     border-radius: 9999px;
   }
   .command-card {
