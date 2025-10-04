@@ -5,11 +5,30 @@ from discord import app_commands
 class VersionCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.version = "v4.0-prerelease1"
+        self.version = "v4.1"
         self.updates = [
             {
+                "version":"v4.1",
+                "date": "2025-09-22",
+                "changes": [
+                    "Updated Utils Commands (/serverinfo, /roleinfo, /channelinfo)",
+                    "Added Embed Builder (/sendembed #channel)"
+                    "Bug Fixes and Improvements."
+                ]
+            },
+            {
+                "version":"v4.0",
+                "date": "2025-09-16",
+                "changes": [
+                    "AI Automod System Added.",
+                    "AI Chat Added with image, pdf and file readable function (you just have to add attachment on replying to the bot's message)",
+                    "Temp disabled music system. Due to yt_dlp cookie issue",
+                    "Bug Fixes and Improvements."
+                ]
+            },            
+            {
                 "version":"v4.0-prerelease1",
-                "date": "2025-08-20",
+                "date": "2025-08-27",
                 "changes": [
                     "Redesigned Help Command.",
                     "Bug Fixes and Improvements."

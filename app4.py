@@ -1,4 +1,4 @@
-import discord, sys, os, json, asyncio
+import discord, sys, asyncio
 from discord.ext import commands, tasks
 from api import Token
 
@@ -10,11 +10,6 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
-
-#-------------SQ-DB-------------#
-async def initialize_databases():
-    pass
-
 
 #------------UPINFO-------------#
 status_index = 0
@@ -45,7 +40,6 @@ async def on_ready():
     print(f"{bot.user} has connected to Discord!")
     rotate_streaming_status.start()
     try:
-        await initialize_databases()
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} commands")
     except Exception as e:
@@ -54,40 +48,40 @@ async def on_ready():
 
 #------------COMMANDS-----------#
 
-class HelpButton(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=None)
-
-    @discord.ui.button(label="Help", style=discord.ButtonStyle.primary, emoji="❓")
-    async def help_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message(
-            "You can use `/help` to see all available commands!",
-            ephemeral=True
-        )
-
-@bot.event
-async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandNotFound):
-        embed = discord.Embed(
-            title="👋 Hello There!",
-            description=(
-                "It looks like you tried to use a prefix command, but I prefer **slash commands** for better experience.\n\n"
-                "Try using `/help` to see all available commands.\n"
-                "Or click the Help button below!"
-            ),
-            color=discord.Color.teal()
-        )
-        embed.set_thumbnail(url=bot.user.display_avatar.url)
-        embed.set_footer(text="Thanks for being here! 💙")
-
-        view = HelpButton()
-        await ctx.send(embed=embed, view=view)
-    else:
-        raise error
-
+# class HelpButton(discord.ui.View):
+#     def __init__(self):
+#         super().__init__(timeout=None)
+# 
+#     @discord.ui.button(label="Help", style=discord.ButtonStyle.primary, emoji="❓")
+#     async def help_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+#         await interaction.response.send_message(
+#             "You can use `/help` to see all available commands!",
+#             ephemeral=True
+#         )
+# 
+# @bot.event
+# async def on_command_error(ctx, error):
+#     if isinstance(error, commands.CommandNotFound):
+#         embed = discord.Embed(
+#             title="👋 Hello There!",
+#             description=(
+#                 "It looks like you tried to use a prefix command, but I prefer **slash commands** for better experience.\n\n"
+#                 "Try using `/help` to see all available commands.\n"
+#                 "Or click the Help button below!"
+#             ),
+#             color=discord.Color.teal()
+#         )
+#         embed.set_thumbnail(url=bot.user.display_avatar.url)
+#         embed.set_footer(text="Thanks for being here! 💙")
+# 
+#         view = HelpButton()
+#         await ctx.send(embed=embed, view=view)
+#     else:
+#         raise error
+# 
 #--------------COGS-------------#
 async def load_cogs():
-    cogs = ["commands.ping", "commands.moderation", "commands.utils", "commands.avater", "commands.help", "commands.automod", "commands.fun"]
+    cogs = ["commands.ping", "commands.moderation", "commands.utils", "commands.avater", "commands.help", "commands.automod", "commands.fun", "commands.embedbuilder", "commands.genai", "commands.uptime"]
     print(f"Loaded {len(cogs)} cog(s)")
     for cog in cogs:
         
@@ -107,6 +101,7 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-        initialize_databases()
     except Exception as e:
         print(f"Error running the bot: {e}")
+    except KeyboardInterrupt:
+        print("Shutting down the bot")
