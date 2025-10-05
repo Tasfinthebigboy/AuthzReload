@@ -5,14 +5,23 @@ from discord import app_commands
 class VersionCommand(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.version = "v4.1"
+        self.version = "v4.2"
         self.updates = [
+            {
+                "version":"v4.2",
+                "date": "2025-10-04",
+                "changes": [
+                    "Added New plugins system! (/uploadplugin, /pluginlist, /removeplugin)",
+                    "Check out the github page to learn how to add plugins.",
+                    "Bug Fixes and Improvements."
+                ]
+            },
             {
                 "version":"v4.1",
                 "date": "2025-09-22",
                 "changes": [
                     "Updated Utils Commands (/serverinfo, /roleinfo, /channelinfo)",
-                    "Added Embed Builder (/sendembed #channel)"
+                    "Added Embed Builder (/sendembed #channel)",
                     "Bug Fixes and Improvements."
                 ]
             },
