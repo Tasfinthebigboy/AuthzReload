@@ -81,7 +81,7 @@ async def on_ready():
 # 
 #--------------COGS-------------#
 async def load_cogs():
-    cogs = ["commands.ping", "commands.moderation", "commands.utils", "commands.avater", "commands.help", "commands.automod", "commands.fun", "commands.embedbuilder", "commands.genai", "commands.uptime"]
+    cogs = ["commands.ping", "commands.moderation", "commands.utils", "commands.avater", "commands.help", "commands.automod", "commands.fun", "commands.embedbuilder", "commands.genai", "commands.uptime", "commands.update", "commands.plugins"]
     print(f"Loaded {len(cogs)} cog(s)")
     for cog in cogs:
         
