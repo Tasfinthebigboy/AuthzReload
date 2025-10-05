@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import datetime
 
-BOT_VERSION = "4.1"
+BOT_VERSION = "4.2"
 LIBRARY = "discord.py"
 
 class Uptime(commands.Cog):
