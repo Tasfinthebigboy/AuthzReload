@@ -2,6 +2,20 @@
 
 AZ Authz is a multifunctional Discord bot with moderation, utility, automod, fun, AI, and plugin features. It is designed to make server management easier and more engaging.
 
+> [!WARNING]
+>
+> ## Open Source Discontinuation Notice
+> ---
+>
+> The **4.5-snapshot** version will be the **final fully open-source version** of this project.  
+>
+> Beginning with **version 4.5** and onward, the project will transition to a **closed-source model** — however,  
+> **source code access will remain available exclusively to premium users** through our **official Discord server**.  
+>
+> All previous versions, including **4.5-snapshot** and earlier, will remain **publicly available** under their current open-source license.  
+>
+> ⚠️ We sincerely thank everyone who supported and contributed during the open-source phase of this project.
+
 ---
 
 ## Links
@@ -138,3 +152,4 @@ python main.py
 
 If you need help, join our [Support Server](https://authz.bot.nu/discord/).
 You can also check the [Documentation](Documentation.md) for setup instructions and advanced features.
+
